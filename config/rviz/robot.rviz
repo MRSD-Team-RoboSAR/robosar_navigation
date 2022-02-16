@@ -7,7 +7,6 @@ Panels:
         - /TF1/Frames1
         - /TF1/Tree1
         - /Global Map1/Costmap1
-        - /Local Map1
         - /Local Map1/Costmap1
         - /Local Map1/Planner1
         - /Local Map1/Trajectory Cloud1
@@ -202,7 +201,7 @@ Visualization Manager:
           Topic: /move_base/TrajectoryPlannerROS/global_plan
           Unreliable: false
           Value: true
-      Enabled: true
+      Enabled: false
       Name: Global Map
     - Class: rviz/Group
       Displays:
@@ -296,7 +295,7 @@ Visualization Manager:
           Use Fixed Frame: true
           Use rainbow: false
           Value: true
-      Enabled: true
+      Enabled: false
       Name: Local Map
     - Alpha: 1
       Arrow Length: 0.20000000298023224
@@ -365,7 +364,7 @@ Visualization Manager:
   Value: true
   Views:
     Current:
-      Angle: -6.720029830932617
+      Angle: -7.90002965927124
       Class: rviz/TopDownOrtho
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
@@ -375,10 +374,10 @@ Visualization Manager:
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Scale: 94.97455596923828
+      Scale: 149.44430541992188
       Target Frame: <Fixed Frame>
-      X: -1.3533600568771362
-      Y: 2.0439798831939697
+      X: 0.6010899543762207
+      Y: 0.0186318252235651
     Saved: ~
 Window Geometry:
   Displays:
