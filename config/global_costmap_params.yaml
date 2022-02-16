@@ -6,3 +6,5 @@ global_costmap:
   map_topic: /map
   origin_x: -50
   origin_y: -50
+  width: 100
+  height: 100
