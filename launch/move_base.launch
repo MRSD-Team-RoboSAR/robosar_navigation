@@ -1,0 +1,19 @@
+<launch>
+   <master auto="start"/>
+ 	<!-- Run the map server  
+    	<node name="map_server" pkg="map_server" type="map_server" args="$(find robosar_navigation)/maps/blank_map.yaml"/> -->
+
+ 	<!--- Run AMCL 
+    	<include file="$(find amcl)/examples/amcl_omni.launch" /> --> 
+	<node pkg="tf2_ros" type="static_transform_publisher" name="base_link_broadcaster" args="0 0 0 0 0 0 1 base_link odom" />
+   	<node pkg="move_base" type="move_base" respawn="false" name="move_base" output="screen">
+		<rosparam file="$(find robosar_navigation)/config/costmap_common_params.yaml" command="load" ns="global_costmap" /> 
+		<rosparam file="$(find robosar_navigation)/config/costmap_common_params.yaml" command="load" ns="local_costmap" />
+		<rosparam file="$(find robosar_navigation)/config/local_costmap_params.yaml" command="load" />
+		<rosparam file="$(find robosar_navigation)/config/global_costmap_params.yaml" command="load" /> 
+		<rosparam file="$(find robosar_navigation)/config/base_local_planner_params.yaml" command="load" />
+        <remap from="cmd_vel" to="robosar_agent_bringup_launch/agent1/control"/>
+ 	</node>
+
+	<node name="rviz" pkg="rviz" type="rviz" args="-d $(find robosar_navigation)/config/rviz/robot.rviz" />
+</launch> 
