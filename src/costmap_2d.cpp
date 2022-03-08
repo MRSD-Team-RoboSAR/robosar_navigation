@@ -5,7 +5,9 @@
 
 char* Costmap2D::cost_translation_table_ = NULL;
 
-Costmap2D::Costmap2D() : nh_(""), size_width(0), size_height(0), track_unknown_space(true), trinary_costmap(true),costmap_(NULL) {
+Costmap2D::Costmap2D() : nh_(""), size_width(0), size_height(0), track_unknown_space(true), 
+                            trinary_costmap(true),costmap_(NULL), inflation_radius(0.2), inscribed_radius(0.1),
+                            inflation_cost_scaling_factor(10.0) {
 
     ROS_INFO("Requesting the map...");
     map_sub_ = nh_.subscribe("map", 1, &Costmap2D::incomingMap, this);
@@ -86,6 +88,8 @@ void Costmap2D::incomingMap(const nav_msgs::OccupancyGridConstPtr& new_map)
     resolution = new_map->info.resolution;
     size_width = size_x;
     size_height = size_y;
+
+    inflator_.initialiseInflator(size_width, size_height, cellDistance(inflation_radius), resolution, inscribed_radius,inflation_cost_scaling_factor);
   }
 
   unsigned int index = 0;
@@ -100,6 +104,9 @@ void Costmap2D::incomingMap(const nav_msgs::OccupancyGridConstPtr& new_map)
       ++index;
     }
   }
+
+  // inflate near obstacles
+  inflator_.inflateCosts(costmap_);
   
   map_received_ = true;
   has_updated_data_ = true;
@@ -157,4 +164,10 @@ void Costmap2D::prepareGrid()
   {
     grid_.data[i] = cost_translation_table_[ data[ i ]];
   }
+}
+
+unsigned int Costmap2D::cellDistance(double world_dist)
+{
+    double cells_dist = std::max(0.0, ceil(world_dist / resolution));
+    return (unsigned int)cells_dist;
 }
