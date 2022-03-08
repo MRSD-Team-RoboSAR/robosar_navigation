@@ -3,7 +3,9 @@
 #include "costmap_2d.hpp"
 #include <ros/console.h>
 
-Costmap2D::Costmap2D() : nh_(""), size_width(0), size_height(0), track_unknown_space(false), trinary_costmap(true),costmap_(NULL) {
+char* Costmap2D::cost_translation_table_ = NULL;
+
+Costmap2D::Costmap2D() : nh_(""), size_width(0), size_height(0), track_unknown_space(true), trinary_costmap(true),costmap_(NULL) {
 
     ROS_INFO("Requesting the map...");
     map_sub_ = nh_.subscribe("map", 1, &Costmap2D::incomingMap, this);
@@ -19,6 +21,15 @@ Costmap2D::Costmap2D() : nh_(""), size_width(0), size_height(0), track_unknown_s
 
     ROS_INFO("Map Received!");
 
+    if (cost_translation_table_ == NULL)
+    {
+      create_translation_table();
+    }
+
+    // costmap publisher
+    costmap_pub_ = nh_.advertise<nav_msgs::OccupancyGrid>("robosar_navigation/costmap", 1,
+                                                    boost::bind(&Costmap2D::onNewSubscription, this, _1));
+
 }
 
 Costmap2D::~Costmap2D() {
@@ -26,10 +37,31 @@ Costmap2D::~Costmap2D() {
     // Do we need a lock here?
     delete[] costmap_;
     costmap_ = NULL;
+
+    delete[] cost_translation_table_;
+    cost_translation_table_ = NULL;
+}
+
+void Costmap2D::create_translation_table() {
+    cost_translation_table_ = new char[256];
+
+    // special values:
+    cost_translation_table_[0] = 0;  // NO obstacle
+    cost_translation_table_[253] = 99;  // INSCRIBED obstacle
+    cost_translation_table_[254] = 100;  // LETHAL obstacle
+    cost_translation_table_[255] = -1;  // UNKNOWN
+
+    // regular cost values scale the range 1 to 252 (inclusive) to fit
+    // into 1 to 98 (inclusive).
+    for (int i = 1; i < 253; i++)
+    {
+      cost_translation_table_[ i ] = char(1 + (97 * (i - 1)) / 251);
+    }
 }
 
 void Costmap2D::incomingMap(const nav_msgs::OccupancyGridConstPtr& new_map)
 {
+  std::lock_guard<std::mutex> guard(mtx);
   unsigned int size_x = new_map->info.width, size_y = new_map->info.height;
 
   ROS_INFO("Received a %d X %d map at %f m/pix with origin %f %f", size_x, size_y, 
@@ -45,6 +77,15 @@ void Costmap2D::incomingMap(const nav_msgs::OccupancyGridConstPtr& new_map)
         costmap_ = NULL;
     }
     costmap_ = new unsigned char[size_x * size_y];
+    
+    // Update all parameters
+    map_frame_ = new_map->header.frame_id;
+  
+    origin_y = new_map->info.origin.position.y;
+    origin_x = new_map->info.origin.position.x;
+    resolution = new_map->info.resolution;
+    size_width = size_x;
+    size_height = size_y;
   }
 
   unsigned int index = 0;
@@ -59,10 +100,7 @@ void Costmap2D::incomingMap(const nav_msgs::OccupancyGridConstPtr& new_map)
       ++index;
     }
   }
-  map_frame_ = new_map->header.frame_id;
-
-  size_width = size_x;
-  size_height = size_y;
+  
   map_received_ = true;
   has_updated_data_ = true;
 
@@ -86,4 +124,37 @@ unsigned char Costmap2D::interpretValue(unsigned char value)
 
   double scale = (double) value / lethal_threshold_;
   return scale * LETHAL_OBSTACLE;
+}
+
+
+
+void Costmap2D::onNewSubscription(const ros::SingleSubscriberPublisher& pub)
+{
+  prepareGrid();
+  pub.publish(grid_);
+}
+
+void Costmap2D::prepareGrid()
+{
+  std::lock_guard<std::mutex> guard(mtx);
+
+  grid_.header.frame_id = map_frame_;
+  grid_.header.stamp = ros::Time::now();
+  grid_.info.resolution = resolution;
+
+  grid_.info.width = size_width;
+  grid_.info.height = size_height;
+
+  grid_.info.origin.position.x = origin_x;
+  grid_.info.origin.position.y = origin_y;
+  grid_.info.origin.position.z = 0.0;
+  grid_.info.origin.orientation.w = 1.0;
+
+  grid_.data.resize(grid_.info.width * grid_.info.height);
+
+  unsigned char* data = costmap_;
+  for (unsigned int i = 0; i < grid_.data.size(); i++)
+  {
+    grid_.data[i] = cost_translation_table_[ data[ i ]];
+  }
 }
