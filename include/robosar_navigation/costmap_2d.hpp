@@ -14,6 +14,15 @@ public:
     Costmap2D();
     ~Costmap2D();
 
+protected:
+    unsigned int size_width;
+    unsigned int size_height;
+    double origin_x;
+    double origin_y;
+    double resolution;
+    std::string map_frame_;  /// @brief frame that map is located in
+    ros::NodeHandle nh_;
+    unsigned char* costmap_;
 
 private:
     void incomingMap(const nav_msgs::OccupancyGridConstPtr& new_map);
@@ -23,12 +32,6 @@ private:
     void create_translation_table();
     unsigned int cellDistance(double world_dist);
 
-    unsigned int size_width;
-    unsigned int size_height;
-    double origin_x;
-    double origin_y;
-    double resolution;
-    std::string map_frame_;  /// @brief frame that map is located in
 
     double inscribed_radius;
     double inflation_radius;
@@ -38,11 +41,9 @@ private:
     std::mutex mtx;
     bool track_unknown_space;
     bool trinary_costmap;
-    unsigned char* costmap_;
     bool map_received_;
     bool has_updated_data_;
     nav_msgs::OccupancyGrid grid_;
-    ros::NodeHandle nh_;
     // TODO update_sub
     ros::Subscriber map_sub_, map_update_sub_;
     ros::Publisher costmap_pub_;

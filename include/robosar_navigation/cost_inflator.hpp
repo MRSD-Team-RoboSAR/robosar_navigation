@@ -4,6 +4,7 @@
 #define COST_INFLATOR_HPP
 
 #include <assert.h>
+#include <ros/console.h>
 
 // TODO @indraneel : Right now inflates the entire map
 // In the future can start inflating only a part of the map
@@ -217,11 +218,11 @@ public:
         {
             for (unsigned int i = 0; i <= cell_inflation_radius_ + 1; ++i)
             {
-            if (cached_distances_[i])
-                delete[] cached_distances_[i];
+                if (cached_distances_[i])
+                    delete[] cached_distances_[i];
             }
             if (cached_distances_)
-            delete[] cached_distances_;
+                delete[] cached_distances_;
             cached_distances_ = NULL;
         }
 

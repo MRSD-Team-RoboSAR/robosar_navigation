@@ -117,12 +117,14 @@ catkin_package(
 ## Your package locations should be listed before other locations
 include_directories(
   include/${PROJECT_NAME}
+  include/${PROJECT_NAME}/graphs
   ${catkin_INCLUDE_DIRS}
 )
 
 ## Declare a C++ library
 add_library(${PROJECT_NAME}
    src/costmap_2d.cpp
+   src/graphs/graph_2d_grid.cpp
  )
 
 ## Add cmake target dependencies of the library
