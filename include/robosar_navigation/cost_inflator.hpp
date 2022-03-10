@@ -83,7 +83,10 @@ public:
     void inflateCosts(unsigned char* costmap_)
     {
         if (cell_inflation_radius_ == 0 || !initialised)
+        {
+            ROS_WARN("Aborting inflate costs!");
             return;
+        }
 
         ROS_ASSERT_MSG(inflation_cells_.empty(),"Inflation list must be empty at the beginning!");
 
@@ -175,6 +178,12 @@ public:
         return cost;
     }
 
+    /**
+     *  Caches two operations (both possible because distance is in terms of cell distance and coordinates are cell coordinates)
+     * Cost calculation of a cell within inflation radius
+     * Euclidean distance between two cells
+     * 
+     * */
     void computeCaches() {
 
         if (cell_inflation_radius_ == 0)
@@ -231,7 +240,7 @@ public:
     inline void enqueue(unsigned int index, unsigned int mx, unsigned int my,
                                     unsigned int src_x, unsigned int src_y)
     {
-        if (mx>0 && mx<size_x-1  && my>0 && mx<size_y-1 && !seen_[index] )
+        if (mx>0 && mx<size_x-1  && my>0 && my<size_y-1 && !seen_[index] )
         {
             // we compute our distance table one cell further than the inflation radius dictates so we can make the check below
             double distance = distanceLookup(mx, my, src_x, src_y);
