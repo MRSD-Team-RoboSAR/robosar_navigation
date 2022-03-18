@@ -118,6 +118,7 @@ catkin_package(
 include_directories(
   include/${PROJECT_NAME}
   include/${PROJECT_NAME}/graphs
+  include/${PROJECT_NAME}/planners
   ${catkin_INCLUDE_DIRS}
 )
 

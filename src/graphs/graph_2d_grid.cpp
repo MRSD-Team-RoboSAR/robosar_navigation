@@ -39,3 +39,13 @@ void Graph2DGrid::scaleCostMap()
     }
 
 }
+
+bool Graph2DGrid::collisionCheck(int node_id) {
+
+    return false;
+}
+
+int Graph2DGrid::toNodeID(int *point) {
+
+    return 0;
+}

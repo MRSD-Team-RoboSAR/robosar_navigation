@@ -23,6 +23,9 @@ public:
     Graph2DGrid();
     ~Graph2DGrid();
 
+    bool collisionCheck(int node_id);
+    int toNodeID(int *point);
+
 private:
     void scaleCostMap();
     bool allow_unknown;

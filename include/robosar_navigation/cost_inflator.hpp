@@ -6,6 +6,7 @@
 #include <assert.h>
 #include <ros/console.h>
 
+
 // TODO @indraneel : Right now inflates the entire map
 // In the future can start inflating only a part of the map
 
