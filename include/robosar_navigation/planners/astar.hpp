@@ -51,6 +51,8 @@ public:
         pending = new bool[ns];
         cameFrom = new int[ns];
         memset(pending, 0, ns*sizeof(bool));
+        memset(cameFrom, -1, ns*sizeof(int));
+
 
         // Add start to the priority queue
         std::pair<float,int> start_node = std::make_pair(0.0f,startID);
@@ -123,7 +125,16 @@ public:
         if(path_found)
         {
             // Retrace path
-            
+            std::vector<double> point = pg->toNodeInfo(goalID);
+            trajectory.push_back(point);
+            int parentID = cameFrom[goalID];
+
+            while(parentID!=-1)
+            {
+                point = pg->toNodeInfo(parentID);
+                trajectory.push_back(point);
+                parentID = cameFrom[parentID];
+            }
         }
 
         return path_found;

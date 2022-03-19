@@ -56,6 +56,13 @@ int Graph2DGrid::toNodeID(int *point) {
     return 0;
 }
 
+std::vector<double> Graph2DGrid::toNodeInfo(int node_id) {
+    // TODO
+    std::vector<double> nodeInfo;
+
+    return nodeInfo;
+}
+
 int Graph2DGrid::getNumNodes() {
     // TODO
     return 0;
