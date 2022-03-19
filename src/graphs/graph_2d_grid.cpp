@@ -42,10 +42,17 @@ void Graph2DGrid::scaleCostMap()
 
 bool Graph2DGrid::collisionCheck(int node_id) {
 
+    // TODO
     return false;
 }
 
 int Graph2DGrid::toNodeID(int *point) {
 
+    // TODO
+    return 0;
+}
+
+int Graph2DGrid::getNumNodes() {
+    // TODO
     return 0;
 }

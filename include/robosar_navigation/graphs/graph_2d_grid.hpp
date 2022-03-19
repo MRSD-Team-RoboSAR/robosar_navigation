@@ -25,6 +25,7 @@ public:
 
     bool collisionCheck(int node_id);
     int toNodeID(int *point);
+    int getNumNodes();
 
 private:
     void scaleCostMap();
