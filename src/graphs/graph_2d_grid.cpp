@@ -25,6 +25,10 @@ void Graph2DGrid::scaleCostMap()
             unsigned char value = costmap_[i];
             costmap_[i] = COST_OBS;
 
+            // Border cells are obstacles
+            if(i<size_width || i>= (size_height-1)*size_width || i%size_width==0 || (i+1)%size_width==0) 
+                continue;
+
             if(value < COST_OBS_ROS)
             {
                 int new_value = COST_NEUTRAL+COST_FACTOR*value;
@@ -55,4 +59,21 @@ int Graph2DGrid::toNodeID(int *point) {
 int Graph2DGrid::getNumNodes() {
     // TODO
     return 0;
+}
+
+float Graph2DGrid::getDistanceBwNodes(int node1, int node2) {
+    // TODO
+    return 0;
+}
+
+std::vector<int> Graph2DGrid::getNeighbours(int node_id) {
+    // TODO
+    std::vector<int> neighbours;
+    return neighbours;
+}
+
+int Graph2DGrid::lookUpCost(int node) {
+
+    // TODO
+    return (int)costmap_[node];
 }

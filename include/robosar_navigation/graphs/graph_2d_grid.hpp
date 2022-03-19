@@ -26,6 +26,9 @@ public:
     bool collisionCheck(int node_id);
     int toNodeID(int *point);
     int getNumNodes();
+    float getDistanceBwNodes(int node1, int node2);
+    std::vector<int> getNeighbours(int node);
+    int lookUpCost(int node);
 
 private:
     void scaleCostMap();
