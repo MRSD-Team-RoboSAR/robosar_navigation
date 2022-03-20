@@ -14,7 +14,7 @@
 class AStar {
 
 public:
-    AStar(Graph* graph,int g[2], int s[2]) : planner_initialised(false),pg(graph), heuristic_weight(10.0f) {
+    AStar(Graph* graph,double g[2], double s[2]) : planner_initialised(false),pg(graph), heuristic_weight(10.0f) {
 
         goal[0] = g[0];
         goal[1] = g[1];
@@ -28,17 +28,17 @@ public:
         // Check if goal and start are collision free
         if(graph->collisionCheck(goalID))
         {
-            ROS_WARN("[AStar] Goal in collision! %d,%d\n", goal[0], goal[1]);
+            ROS_WARN("[AStar] Goal in collision! %f,%f\n", goal[0], goal[1]);
             return;
         }
         else if(graph->collisionCheck(startID))
         {
-           ROS_WARN("[AStar] Start in collision! %d,%d\n", start[0], start[1]); 
+           ROS_WARN("[AStar] Start in collision! %f,%f\n", start[0], start[1]); 
            return;
         }
 
-        ROS_INFO("[AStar] Setting goal to %d,%d\n", goal[0], goal[1]);
-        ROS_INFO("[AStar] Setting start to %d,%d\n",start[0], start[1]);
+        ROS_INFO("[AStar] Setting goal to %f,%f\n", goal[0], goal[1]);
+        ROS_INFO("[AStar] Setting start to %f,%f\n",start[0], start[1]);
 
         // Initialise potential array
         int ns = graph->getNumNodes();
@@ -159,8 +159,8 @@ private:
     Graph* pg;
     int goalID;
     int startID;
-    int goal[2];
-    int start[2];
+    double goal[2];
+    double start[2];
     bool planner_initialised;
     int nx, ny, ns;		/**< size of grid, in pixels */
     float heuristic_weight;

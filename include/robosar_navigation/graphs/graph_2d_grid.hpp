@@ -5,6 +5,7 @@
 
 #include <ros/ros.h>
 #include "costmap_2d.hpp"
+#include <vector>
 
 // cost defs
 #define COST_UNKNOWN_ROS 255		// 255 is unknown cost
@@ -24,7 +25,7 @@ public:
     ~Graph2DGrid();
 
     bool collisionCheck(int node_id);
-    int toNodeID(int *point);
+    int toNodeID(double *point);
     std::vector<double> toNodeInfo(int node_id);
     int getNumNodes();
     float getDistanceBwNodes(int node1, int node2);
@@ -34,6 +35,7 @@ public:
 private:
     void scaleCostMap();
     bool allow_unknown;
+    std::vector<std::vector<int>> propogation_model;
 
 };
 
