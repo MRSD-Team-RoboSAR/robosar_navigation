@@ -31,6 +31,7 @@ public:
     float getDistanceBwNodes(int node1, int node2);
     std::vector<int> getNeighbours(int node);
     int lookUpCost(int node);
+    std::string getFrame(void);
 
 private:
     void scaleCostMap();

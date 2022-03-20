@@ -5,6 +5,9 @@
 
 #include "graph_2d_grid.hpp"
 #include <queue>
+#include <nav_msgs/Path.h>
+#include <visualization_msgs/MarkerArray.h>
+#include <visualization_msgs/Marker.h>
 
 // Underlying graph datatype can be changed here
 #undef Graph
@@ -14,7 +17,7 @@
 class AStar {
 
 public:
-    AStar(Graph* graph,double g[2], double s[2]) : planner_initialised(false),pg(graph), heuristic_weight(10.0f) {
+    AStar(Graph* graph,double g[2], double s[2]) : planner_initialised(false),pg(graph), heuristic_weight(10.0f), nh_("") {
 
         goal[0] = g[0];
         goal[1] = g[1];
@@ -58,6 +61,12 @@ public:
         std::pair<float,int> start_node = std::make_pair(0.0f,startID);
         queue.push(start_node);
         cameFrom[startID] = -1;
+
+        // traj publisher for rviz
+        traj_pub_ = nh_.advertise<nav_msgs::Path>("plan", 1);
+        // start and goal publisher for rviz
+        endpoint_pub_ = nh_.advertise<visualization_msgs::MarkerArray>("plan", 1);
+        publishEndpoints();
 
         planner_initialised = true;
     }
@@ -135,9 +144,67 @@ public:
                 trajectory.push_back(point);
                 parentID = cameFrom[parentID];
             }
+            publishPlan();
         }
 
         return path_found;
+    }
+
+    void publishPlan() {
+
+        //create a message for the plan 
+        nav_msgs::Path gui_path;
+        gui_path.poses.resize(trajectory.size());
+
+        gui_path.header.frame_id = pg->getFrame();
+        gui_path.header.stamp = ros::Time::now();
+
+        for(int i=0;i<trajectory.size();i++)
+        {
+            gui_path.poses[i].pose.position.x = trajectory[i][0];
+            gui_path.poses[i].pose.position.y = trajectory[i][1];
+        }
+
+        traj_pub_.publish(gui_path);
+    }
+
+    void publishEndpoints() {
+
+        visualization_msgs::Marker marker;
+        visualization_msgs::MarkerArray marker_arr;
+
+        // common info
+        marker.header.stamp = ros::Time::now();
+        marker.header.frame_id = pg->getFrame();
+        marker.type = 2; //sphere
+        marker.lifetime = ros::Duration();
+        marker.action = 0; // add
+        marker.pose.orientation.w = 0;
+
+        marker.scale.x = 0.1f;
+        marker.scale.y = 0.1f;
+        marker.scale.z = 0.1f;
+        std_msgs::ColorRGBA color = std_msgs::ColorRGBA();
+        color.r = 254.0f;
+        color.g = 254.0f;
+        color.b = 254.0f;
+        color.a = 1;
+        marker.color = color;
+
+        // Add start point
+        marker.id = 0;
+        marker.pose.position.x = start[0];
+        marker.pose.position.y = start[1];
+        marker.pose.position.z = 0.0;
+        marker_arr.markers.push_back(marker);
+
+        // Add end point 
+        marker.id = 1;
+        marker.pose.position.x = goal[0];
+        marker.pose.position.y = goal[1];
+        marker.pose.position.z = 0.0;
+        marker_arr.markers.push_back(marker);
+        endpoint_pub_.publish(marker_arr);
     }
 
     /** @brief : Compare class for the priority queue */
@@ -167,6 +234,9 @@ private:
     std::priority_queue<std::pair<float, int>,
                       std::vector<std::pair<float, int>>,
                       CompareClass> queue;
+    ros::Publisher traj_pub_;
+    ros::Publisher endpoint_pub_;
+    ros::NodeHandle nh_;
 };
 
 #endif //ASTAR_HPP

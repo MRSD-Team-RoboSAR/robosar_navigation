@@ -124,3 +124,7 @@ int Graph2DGrid::lookUpCost(int node) {
     // TODO
     return (int)costmap_[node];
 }
+
+std::string Graph2DGrid::getFrame(void) {
+    return map_frame_;
+}
