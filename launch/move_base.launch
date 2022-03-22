@@ -5,7 +5,7 @@
 
  	<!--- Run AMCL 
     	<include file="$(find amcl)/examples/amcl_omni.launch" /> --> 
-	<node pkg="tf2_ros" type="static_transform_publisher" name="base_link_broadcaster" args="0 0 0 0 0 0 1 base_link odom" />
+	<node pkg="tf2_ros" type="static_transform_publisher" name="base_link_broadcaster" args="0 0 0 0 0 0 1 agent1/base_link agent1/odom" />
    	<node pkg="move_base" type="move_base" respawn="false" name="move_base" output="screen">
 		<rosparam file="$(find robosar_navigation)/config/costmap_common_params.yaml" command="load" ns="global_costmap" /> 
 		<rosparam file="$(find robosar_navigation)/config/costmap_common_params.yaml" command="load" ns="local_costmap" />
