@@ -77,13 +77,15 @@ Visualization Manager:
       Frame Timeout: 15
       Frames:
         All Enabled: false
-        base_link:
+        agent1/base_link:
           Value: true
-        laser:
+        agent1/odom:
+          Value: true
+        agent2/odom:
+          Value: true
+        agent3/odom:
           Value: true
         map:
-          Value: true
-        odom:
           Value: true
       Marker Alpha: 1
       Marker Scale: 1
@@ -93,10 +95,13 @@ Visualization Manager:
       Show Names: false
       Tree:
         map:
-          odom:
-            base_link:
-              laser:
-                {}
+          agent1/odom:
+            agent1/base_link:
+              {}
+          agent2/odom:
+            {}
+          agent3/odom:
+            {}
       Update Interval: 0
       Value: true
     - Alpha: 1
@@ -201,7 +206,7 @@ Visualization Manager:
           Topic: /move_base/TrajectoryPlannerROS/global_plan
           Unreliable: false
           Value: true
-      Enabled: false
+      Enabled: true
       Name: Global Map
     - Class: rviz/Group
       Displays:
@@ -295,7 +300,7 @@ Visualization Manager:
           Use Fixed Frame: true
           Use rainbow: false
           Value: true
-      Enabled: false
+      Enabled: true
       Name: Local Map
     - Alpha: 1
       Arrow Length: 0.20000000298023224
