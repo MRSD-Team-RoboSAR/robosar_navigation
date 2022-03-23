@@ -1,9 +1,8 @@
 global_costmap:
   global_frame: map
-  robot_base_frame: agent1/base_link
   update_frequency: 5.0
   static_map: true
-  map_topic: map
+  map_topic: /map
   origin_x: -5
   origin_y: -5
   width: 10

@@ -1,0 +1,14 @@
+<launch>
+    <master auto="start"/>
+    <arg name="agentN"/>
+   	<include file="$(find robosar_navigation)/launch/move_base_agentN.launch">
+        <arg name="agentN" value="agent1" />
+    </include>
+    <include file="$(find robosar_navigation)/launch/move_base_agentN.launch">
+        <arg name="agentN" value="agent2" />
+    </include>
+
+    <node name="rviz" pkg="rviz" type="rviz" args="-d $(find robosar_navigation)/config/rviz/robot.rviz">
+    </node>
+    <node pkg="rosservice" type="rosservice" name="set_move_base_log_level" args="call --wait /move_base/set_logger_level 'ros.move_base' 'debug'" />
+</launch> 

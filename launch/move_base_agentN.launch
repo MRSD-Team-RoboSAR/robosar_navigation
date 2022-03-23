@@ -1,0 +1,27 @@
+<launch>
+  <master auto="start"/>
+  <arg name="agentN"/>
+  <node pkg="move_base" type="move_base" respawn="false" name="move_base" output="screen" ns="navigation/$(arg agentN)">
+    <!-- Load config files -->
+    <rosparam file="$(find robosar_navigation)/config/costmap_common_params.yaml" command="load" ns="global_costmap" /> 
+		<rosparam file="$(find robosar_navigation)/config/costmap_common_params.yaml" command="load" ns="local_costmap" />
+		<rosparam file="$(find robosar_navigation)/config/local_costmap_params.yaml" command="load" />
+		<rosparam file="$(find robosar_navigation)/config/global_costmap_params.yaml" command="load" /> 
+		<rosparam file="$(find robosar_navigation)/config/base_local_planner_params.yaml" command="load" />
+    <!-- Agent specific config -->
+    <param name="global_costmap/robot_base_frame" type="string" value="$(arg agentN)/base_link" />
+    <param name="local_costmap/robot_base_frame" type="string" value="$(arg agentN)/base_link" />
+    <remap from="cmd_vel" to="/robosar_agent_bringup_launch/$(arg agentN)/control"/>
+    <!-- Laser scanner -->
+    <param name="global_costmap/laser_scan_sensor/sensor_frame" value="$(arg agentN)/base_link"/>
+    <param name="global_costmap/laser_scan_sensor/data_type" value="LaserScan"/>
+    <param name="global_costmap/laser_scan_sensor/topic" value="/robosar_agent_bringup_launch/$(arg agentN)/feedback/scan"/>
+    <param name="global_costmap/laser_scan_sensor/marking" value="true"/>
+    <param name="global_costmap/laser_scan_sensor/clearing" value="true"/>
+    <param name="local_costmap/laser_scan_sensor/sensor_frame" value="$(arg agentN)/base_link"/>
+    <param name="local_costmap/laser_scan_sensor/data_type" value="LaserScan"/>
+    <param name="local_costmap/laser_scan_sensor/topic" value="/robosar_agent_bringup_launch/$(arg agentN)/feedback/scan"/>
+    <param name="local_costmap/laser_scan_sensor/marking" value="true"/>
+    <param name="local_costmap/laser_scan_sensor/clearing" value="true"/>
+ 	</node>
+</launch> 
