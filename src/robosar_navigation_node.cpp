@@ -11,9 +11,13 @@ int main(int argc, char **argv)
   //move_base::MoveBase move_base( buffer );
   Graph2DGrid gridmap;
 
-  double goal[] = {0.0,0.0};
-  double start[] = {0.0,0.0};
+  double goal[] = {19.0,20.0};
+  double start[] = {18.0,25.0};
   AStar planner(&gridmap,goal,start);
+
+  ros::Duration(1.0).sleep();
+
+  planner.run_planner(gridmap.getNumNodes());
 
   //ros::MultiThreadedSpinner s;
   ros::spin();

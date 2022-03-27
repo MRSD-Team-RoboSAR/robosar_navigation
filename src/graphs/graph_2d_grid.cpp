@@ -10,11 +10,11 @@ Graph2DGrid::Graph2DGrid(): allow_unknown(false) {
     // @ TODO Indraneel This is called only once 
     // but if the map is changing then this need to be called whenever underlying costmap gets updated
     scaleCostMap();
+    propogation_model = {{1,0}, {0,1}, {-1,0}, {0,-1}};
 }
 
 Graph2DGrid::~Graph2DGrid() {
 
-    propogation_model = {{1,0}, {0,1}, {-1,0}, {0,-1}};
 }
 
 // Scales cost values from the range of 0-252 to COST_NEURAL-COST_OBS_ROS 

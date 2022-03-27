@@ -65,7 +65,7 @@ public:
         // traj publisher for rviz
         traj_pub_ = nh_.advertise<nav_msgs::Path>("plan", 1);
         // start and goal publisher for rviz
-        endpoint_pub_ = nh_.advertise<visualization_msgs::MarkerArray>("plan", 1);
+        endpoint_pub_ = nh_.advertise<visualization_msgs::MarkerArray>("endpoints", 1);
         publishEndpoints();
 
         planner_initialised = true;
@@ -85,12 +85,15 @@ public:
         int cycle = 0;
         bool path_found = false;
 
+        publishEndpoints();
+
         if(!planner_initialised)
         return false;
 
         // do main cycle
         for (; cycle < cycles && !queue.empty(); cycle++) // go for this many cycles or if queue is over
         {
+            ROS_INFO("On cycle %d / %d with queue size %ld \n",cycle,cycles,queue.size());
             std::pair<float,int> node = queue.top();
             queue.pop();
             // Mark as explored
@@ -106,6 +109,7 @@ public:
             }
 
             std::vector<int> neighbours = pg->getNeighbours(node.second);
+            ROS_INFO("%ld",neighbours.size());
             // Graph has already done collision checking and stuff
             for(auto neighbour:neighbours) {
                 
@@ -126,6 +130,7 @@ public:
                     else
                         ROS_WARN("Potential did not improve!!");
 
+                    ROS_INFO("%d %f %f\n",neighbour,new_pot,potarr[neighbour]);
                 }
             }
 
@@ -146,6 +151,8 @@ public:
             }
             publishPlan();
         }
+        else
+            ROS_WARN("Path not found!!");
 
         return path_found;
     }
@@ -181,15 +188,21 @@ public:
         marker.action = 0; // add
         marker.pose.orientation.w = 0;
 
-        marker.scale.x = 0.1f;
-        marker.scale.y = 0.1f;
-        marker.scale.z = 0.1f;
+        marker.scale.x = 1.0f;
+        marker.scale.y = 1.0f;
+        marker.scale.z = 1.0f;
         std_msgs::ColorRGBA color = std_msgs::ColorRGBA();
         color.r = 254.0f;
         color.g = 254.0f;
         color.b = 254.0f;
         color.a = 1;
         marker.color = color;
+        marker.mesh_use_embedded_materials = false;
+        marker.pose.orientation.x = 0;
+        marker.pose.orientation.y = 0;
+        marker.pose.orientation.z = 0;
+        marker.pose.orientation.w = 1;
+
 
         // Add start point
         marker.id = 0;
