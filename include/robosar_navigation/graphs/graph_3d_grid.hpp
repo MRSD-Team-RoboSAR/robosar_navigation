@@ -18,6 +18,8 @@
 #define COST_NEUTRAL 50		// Set this to "open space" value
 #define COST_FACTOR 0.8		// Used for translating costs in NavFn::setCostmap()
 
+#define COLLISION_THRESHOLD 0.14 // Twice the radius of khepera robot
+
 class Graph3DGrid : Costmap2D {
 
 public:
@@ -61,12 +63,15 @@ public:
     std::vector<Node> getNeighbours(Node node);
     int lookUpCost(Node node);
     std::string getFrame(void);
+    void addTrajCache(std::map<double,std::pair<double,double>> trajectory);
 
 private:
     void scaleCostMap();
     bool allow_unknown;
     std::vector<std::vector<int>> propogation_model;
     double propogation_speed;
+    // Cached trajectories for collision checking
+    std::vector<std::map<double,std::pair<double,double>>> traj_cache;
 
 };
 

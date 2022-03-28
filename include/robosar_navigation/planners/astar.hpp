@@ -82,6 +82,7 @@ public:
             // Check if reached goal
             if(qn.second == goalNode)
             {
+                goalNode = qn.second;
                 path_found = true;
                 break;
             }
@@ -116,10 +117,14 @@ public:
         }
 
         if(path_found)
-        {
+        {   
+            // Traj map object for graph collision checking
+            std::map<double,std::pair<double,double>> traj_map;
+
             // Retrace path
             std::vector<double> point = pg->toNodeInfo(goalNode);
             trajectory.push_back(point);
+            traj_map[point[2]] = std::make_pair(point[0],point[1]);
             ROS_INFO("%ld : %f %f %f",trajectory.size(),point[0],point[1],point[2]);
             Graph::Node parentNode = goalNode;
             do
@@ -127,9 +132,11 @@ public:
                 parentNode = cameFrom[parentNode];
                 point = pg->toNodeInfo(parentNode);
                 trajectory.push_back(point);
+                traj_map[point[2]] = std::make_pair(point[0],point[1]);
                 ROS_INFO("%ld : %f %f %f",trajectory.size(),point[0],point[1],point[2]);
             } while (!(parentNode==startNode));
             publishPlan();
+            pg->addTrajCache(traj_map);
         }
         else
             ROS_WARN("Path not found!!");
