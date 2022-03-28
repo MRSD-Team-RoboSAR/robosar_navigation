@@ -19,7 +19,7 @@
 class AStar {
 
 public:
-    AStar(Graph* graph,double* g, double* s) : planner_initialised(false),pg(graph), heuristic_weight(10.0f), nh_(""),
+    AStar(std::string ns_, Graph* graph,double* g, double* s) : planner_initialised(false),pg(graph), heuristic_weight(10.0f), nh_("~/"+ns_),
                                                     goalNode(-1,-1,0.0), startNode(-1,-1, 0.0) {
 
         goal = g;
