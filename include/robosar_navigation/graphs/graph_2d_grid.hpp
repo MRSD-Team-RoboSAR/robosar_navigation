@@ -24,13 +24,40 @@ public:
     Graph2DGrid();
     ~Graph2DGrid();
 
-    bool collisionCheck(int node_id);
-    int toNodeID(double *point);
-    std::vector<double> toNodeInfo(int node_id);
+    class Node {
+        public:
+            Node(int x, int y) : x(x),y(y) {}
+            Node(void)  {
+                // Uninitialised
+                x = -1;
+                y = -1;
+            }
+
+            bool operator==(const Node &n) const
+            {
+                return ((n.x==x) && (n.y==y));
+            }
+
+            bool operator<(const Node &n) const
+            {
+                if(x!=n.x)
+                    return x<n.x;
+                else 
+                    return y<n.y;
+            }
+            
+            int x; 
+            int y;
+    };
+
+    bool collisionCheck(Node n);
+    int toNodeID(Node n);
+    std::vector<double> toNodeInfo(Node n);
     int getNumNodes();
-    float getDistanceBwNodes(int node1, int node2);
-    std::vector<int> getNeighbours(int node);
-    int lookUpCost(int node);
+    Node getNode(double point[2]); 
+    float getDistanceBwNodes(Node node1, Node node2);
+    std::vector<Node> getNeighbours(Node node);
+    int lookUpCost(Node node);
     std::string getFrame(void);
 
 private:

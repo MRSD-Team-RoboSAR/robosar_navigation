@@ -8,6 +8,7 @@
 #include <nav_msgs/Path.h>
 #include <visualization_msgs/MarkerArray.h>
 #include <visualization_msgs/Marker.h>
+#include <unordered_map>
 
 // Underlying graph datatype can be changed here
 #undef Graph
@@ -17,7 +18,8 @@
 class AStar {
 
 public:
-    AStar(Graph* graph,double g[2], double s[2]) : planner_initialised(false),pg(graph), heuristic_weight(10.0f), nh_("") {
+    AStar(Graph* graph,double g[2], double s[2]) : planner_initialised(false),pg(graph), heuristic_weight(10.0f), nh_(""),
+                                                    goalNode(-1,-1), startNode(-1,-1) {
 
         goal[0] = g[0];
         goal[1] = g[1];
@@ -25,16 +27,16 @@ public:
         start[0] = s[0];
         start[1] = s[1];
 
-        goalID = graph->toNodeID(goal);
-        startID = graph->toNodeID(start);
+        goalNode = graph->getNode(goal);
+        startNode = graph->getNode(start);
 
         // Check if goal and start are collision free
-        if(graph->collisionCheck(goalID))
+        if(graph->collisionCheck(goalNode))
         {
             ROS_WARN("[AStar] Goal in collision! %f,%f\n", goal[0], goal[1]);
             return;
         }
-        else if(graph->collisionCheck(startID))
+        else if(graph->collisionCheck(startNode))
         {
            ROS_WARN("[AStar] Start in collision! %f,%f\n", start[0], start[1]); 
            return;
@@ -43,41 +45,19 @@ public:
         ROS_INFO("[AStar] Setting goal to %f,%f\n", goal[0], goal[1]);
         ROS_INFO("[AStar] Setting start to %f,%f\n",start[0], start[1]);
 
-        // Initialise potential array
-        int ns = graph->getNumNodes();
-        potarr = new float[ns];	// navigation potential array
-        for (int i=0; i<ns; i++)
-        {
-            potarr[i] = POT_HIGH;
-        }
-
-        pending = new bool[ns];
-        cameFrom = new int[ns];
-        memset(pending, 0, ns*sizeof(bool));
-        memset(cameFrom, -1, ns*sizeof(int));
-
-
         // Add start to the priority queue
-        std::pair<float,int> start_node = std::make_pair(0.0f,startID);
-        queue.push(start_node);
-        cameFrom[startID] = -1;
+        std::pair<float,Graph::Node> sn = std::make_pair(0.0f,startNode);
+        queue.push(sn);
 
         // traj publisher for rviz
         traj_pub_ = nh_.advertise<nav_msgs::Path>("plan", 1);
         // start and goal publisher for rviz
         endpoint_pub_ = nh_.advertise<visualization_msgs::MarkerArray>("endpoints", 1);
-        publishEndpoints();
 
         planner_initialised = true;
     }
 
     ~AStar(){
-        if(potarr)
-            delete[] potarr;
-        if(pending)
-            delete[] pending;
-        if(cameFrom)
-            delete[] cameFrom;
     }
 
     bool run_planner(int cycles) {
@@ -94,43 +74,44 @@ public:
         for (; cycle < cycles && !queue.empty(); cycle++) // go for this many cycles or if queue is over
         {
             ROS_INFO("On cycle %d / %d with queue size %ld \n",cycle,cycles,queue.size());
-            std::pair<float,int> node = queue.top();
+            std::pair<float,Graph::Node> qn = queue.top();
             queue.pop();
             // Mark as explored
-            if(pending[node.second])
+            if(pending.find(qn.second)!=pending.end())
                 ROS_WARN("Already explored!!");
-            pending[node.second] = 1;
+            pending.insert(qn.second);
 
             // Check if reached goal
-            if(node.second == goalID)
+            if(qn.second == goalNode)
             {
                 path_found = true;
                 break;
             }
 
-            std::vector<int> neighbours = pg->getNeighbours(node.second);
+            std::vector<Graph::Node> neighbours = pg->getNeighbours(qn.second);
             ROS_INFO("%ld",neighbours.size());
             // Graph has already done collision checking and stuff
             for(auto neighbour:neighbours) {
                 
                 // Check if not already visited
-                if(!pending[neighbour]) {
+                if(pending.find(neighbour)==pending.end()) {
                     
                     // cost = cost_so_far + cost_cell + heuristic value
-                    float new_pot = node.first + (float)(pg->lookUpCost(neighbour)) + heuristic_weight*(pg->getDistanceBwNodes(neighbour,goalID));
+                    float new_pot = qn.first + (float)(pg->lookUpCost(neighbour)) + heuristic_weight*(pg->getDistanceBwNodes(neighbour,goalNode));
 
                     // Check if potential improved
-                    if(new_pot<potarr[neighbour])
+                    if(potarr.find(neighbour)==potarr.end() || new_pot<potarr[neighbour])
                     {
                         potarr[neighbour] = new_pot;
-                        std::pair<float,int> neighbour_node = std::make_pair(new_pot,neighbour);
+                        std::pair<float,Graph::Node> neighbour_node = std::make_pair(new_pot,neighbour);
                         queue.push(neighbour_node);
-                        cameFrom[neighbour] = node.second;
+                        cameFrom[neighbour] = qn.second;
                     }
                     else
                         ROS_WARN("Potential did not improve!!");
 
-                    ROS_INFO("%d %f %f\n",neighbour,new_pot,potarr[neighbour]);
+                    ROS_INFO("%d %d %f %f\n",neighbour.x,neighbour.y,new_pot,potarr[neighbour]);
+
                 }
             }
 
@@ -139,16 +120,15 @@ public:
         if(path_found)
         {
             // Retrace path
-            std::vector<double> point = pg->toNodeInfo(goalID);
+            std::vector<double> point = pg->toNodeInfo(goalNode);
             trajectory.push_back(point);
-            int parentID = cameFrom[goalID];
-
-            while(parentID!=-1)
+            Graph::Node parentNode = goalNode;
+            do
             {
-                point = pg->toNodeInfo(parentID);
+                parentNode = cameFrom[parentNode];
+                point = pg->toNodeInfo(parentNode);
                 trajectory.push_back(point);
-                parentID = cameFrom[parentID];
-            }
+            } while (!(parentNode==startNode));
             publishPlan();
         }
         else
@@ -223,8 +203,8 @@ public:
     /** @brief : Compare class for the priority queue */
   class CompareClass {
   public:
-    bool operator()(std::pair<float, int> a,
-                    std::pair<float, int> b) {
+    bool operator()(std::pair<float, Graph::Node> a,
+                    std::pair<float, Graph::Node> b) {
       if (a.first > b.first)
         return true;
       return false;
@@ -233,19 +213,19 @@ public:
 
     std::vector<std::vector<double>> trajectory;
 private:
-    int *cameFrom;  
-    float   *potarr;		/**< potential array, navigation function potential */
-    bool    *pending;		/**< pending cells during propagation */
+    std::map<Graph::Node,float> potarr;
+    std::map<Graph::Node,Graph::Node> cameFrom;
+    std::set<Graph::Node> pending;
     Graph* pg;
-    int goalID;
-    int startID;
+    Graph::Node goalNode;
+    Graph::Node startNode;
     double goal[2];
     double start[2];
     bool planner_initialised;
     int nx, ny, ns;		/**< size of grid, in pixels */
     float heuristic_weight;
-    std::priority_queue<std::pair<float, int>,
-                      std::vector<std::pair<float, int>>,
+    std::priority_queue<std::pair<float, Graph::Node>,
+                      std::vector<std::pair<float, Graph::Node>>,
                       CompareClass> queue;
     ros::Publisher traj_pub_;
     ros::Publisher endpoint_pub_;

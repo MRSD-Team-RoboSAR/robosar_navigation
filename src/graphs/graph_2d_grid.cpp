@@ -44,39 +44,58 @@ void Graph2DGrid::scaleCostMap()
 
 }
 
-bool Graph2DGrid::collisionCheck(int node_id) {
+
+
+bool Graph2DGrid::collisionCheck(Node n) {
 
     // TODO
-    if(costmap_[node_id]>=COST_OBS_ROS)
+    if(costmap_[toNodeID(n)]>=COST_OBS_ROS)
         return true;
 
     return false;
 }
 
-int Graph2DGrid::toNodeID(double *point) {
+int Graph2DGrid::toNodeID(Node n) {
 
     // TODO
-    if(point[0]<origin_x || point[1]<origin_y)
+    //if(point[0]<origin_x || point[1]<origin_y)
+    //    return -1;
+    
+    //int mx = (int)((point[0] - origin_x) / resolution);
+    //int my = (int)((point[1] - origin_y) / resolution);
+
+    if(n.x>= size_width || n.y>=size_height || n.x< 0 || n.y<0)
+    {
+        ROS_WARN("Invalid id request");
         return -1;
+    }
+
+    return n.y*size_width + n.x;
+}
+
+Graph2DGrid::Node Graph2DGrid::getNode(double point[2]) {
+
+    if(point[0]<origin_x || point[1]<origin_y || point[0]>origin_x+size_width*resolution || point[1]>origin_y+size_height*resolution)
+    {
+        ROS_WARN("Requested node off the graph!");
+        return Node(-1,-1);
+    }
     
     int mx = (int)((point[0] - origin_x) / resolution);
     int my = (int)((point[1] - origin_y) / resolution);
 
-    if(mx>= size_width || my>=size_height)
-        return -1;
-
-    return my*size_width + mx;
+    return Node(mx,my);
 }
 
-std::vector<double> Graph2DGrid::toNodeInfo(int node_id) {
+std::vector<double> Graph2DGrid::toNodeInfo(Node n) {
     // TODO
     std::vector<double> nodeInfo;
 
-    int my = node_id/size_width;
-    int mx = node_id%size_width;
+    //int my = node_id/size_width;
+    //int mx = node_id%size_width;
 
-    nodeInfo.push_back(origin_x+resolution*(mx+0.5));
-    nodeInfo.push_back(origin_y+resolution*(my+0.5));
+    nodeInfo.push_back(origin_x+resolution*(n.x+0.5));
+    nodeInfo.push_back(origin_y+resolution*(n.y+0.5));
 
     return nodeInfo;
 }
@@ -86,7 +105,7 @@ int Graph2DGrid::getNumNodes() {
     return size_width*size_height;
 }
 
-float Graph2DGrid::getDistanceBwNodes(int node1, int node2) {
+float Graph2DGrid::getDistanceBwNodes(Node node1, Node node2) {
     // TODO
     std::vector<double> point1 = toNodeInfo(node1);
     std::vector<double> point2 = toNodeInfo(node2);
@@ -95,34 +114,34 @@ float Graph2DGrid::getDistanceBwNodes(int node1, int node2) {
     return std::fabs(point2[0]-point1[0]) + std::fabs(point2[1]-point1[1]);
 }
 
-std::vector<int> Graph2DGrid::getNeighbours(int node_id) {
+std::vector<Graph2DGrid::Node> Graph2DGrid::getNeighbours(Node n) {
     // TODO
-    std::vector<int> neighbours;
+    std::vector<Node> neighbours;
 
-    int my = node_id/size_width;
-    int mx = node_id%size_width;
-
+    //int my = node_id/size_width;
+    //int mx = node_id%size_width;
     for(int i=0;i<propogation_model.size();i++)
     {
-        int nx = mx + propogation_model[i][0];
-        int ny = my + propogation_model[i][1];
+        int nx = n.x + propogation_model[i][0];
+        int ny = n.y + propogation_model[i][1];
 
         // Check if within boundary
         if(nx >=0 && nx <size_width && ny>=0 && ny<size_height)
-        {
+        {   
+            Node neighbour(nx,ny); 
             // Check if collision free
-            if(!collisionCheck(ny*size_width + nx)) {
-                neighbours.push_back(ny*size_width + nx);
+            if(!collisionCheck(neighbour)) {
+                neighbours.push_back(neighbour);
             }
         }
     }
     return neighbours;
 }
 
-int Graph2DGrid::lookUpCost(int node) {
+int Graph2DGrid::lookUpCost(Node n) {
 
     // TODO
-    return (int)costmap_[node];
+    return (int)costmap_[toNodeID(n)];
 }
 
 std::string Graph2DGrid::getFrame(void) {
