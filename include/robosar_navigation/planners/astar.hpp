@@ -4,6 +4,7 @@
 #define ASTAR_HPP
 
 #include "graph_2d_grid.hpp"
+#include "graph_3d_grid.hpp"
 #include <queue>
 #include <nav_msgs/Path.h>
 #include <visualization_msgs/MarkerArray.h>
@@ -12,20 +13,17 @@
 
 // Underlying graph datatype can be changed here
 #undef Graph
-#define Graph Graph2DGrid
+#define Graph Graph3DGrid
 
 #define POT_HIGH 1.0e10		// unassigned cell potential
 class AStar {
 
 public:
-    AStar(Graph* graph,double g[2], double s[2]) : planner_initialised(false),pg(graph), heuristic_weight(10.0f), nh_(""),
-                                                    goalNode(-1,-1), startNode(-1,-1) {
+    AStar(Graph* graph,double* g, double* s) : planner_initialised(false),pg(graph), heuristic_weight(10.0f), nh_(""),
+                                                    goalNode(-1,-1,0.0), startNode(-1,-1, 0.0) {
 
-        goal[0] = g[0];
-        goal[1] = g[1];
-
-        start[0] = s[0];
-        start[1] = s[1];
+        goal = g;
+        start = s;
 
         goalNode = graph->getNode(goal);
         startNode = graph->getNode(start);
@@ -122,12 +120,14 @@ public:
             // Retrace path
             std::vector<double> point = pg->toNodeInfo(goalNode);
             trajectory.push_back(point);
+            ROS_INFO("%ld : %f %f %f",trajectory.size(),point[0],point[1],point[2]);
             Graph::Node parentNode = goalNode;
             do
             {
                 parentNode = cameFrom[parentNode];
                 point = pg->toNodeInfo(parentNode);
                 trajectory.push_back(point);
+                ROS_INFO("%ld : %f %f %f",trajectory.size(),point[0],point[1],point[2]);
             } while (!(parentNode==startNode));
             publishPlan();
         }
@@ -219,8 +219,8 @@ private:
     Graph* pg;
     Graph::Node goalNode;
     Graph::Node startNode;
-    double goal[2];
-    double start[2];
+    double* goal;
+    double* start;
     bool planner_initialised;
     int nx, ny, ns;		/**< size of grid, in pixels */
     float heuristic_weight;

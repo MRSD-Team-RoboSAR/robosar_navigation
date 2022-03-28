@@ -126,6 +126,7 @@ include_directories(
 add_library(${PROJECT_NAME}
    src/costmap_2d.cpp
    src/graphs/graph_2d_grid.cpp
+   src/graphs/graph_3d_grid.cpp
  )
 
 ## Add cmake target dependencies of the library
