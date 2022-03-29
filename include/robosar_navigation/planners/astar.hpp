@@ -175,9 +175,9 @@ public:
         marker.action = 0; // add
         marker.pose.orientation.w = 0;
 
-        marker.scale.x = 1.0f;
-        marker.scale.y = 1.0f;
-        marker.scale.z = 1.0f;
+        marker.scale.x = 0.1f;
+        marker.scale.y = 0.1f;
+        marker.scale.z = 0.1f;
         std_msgs::ColorRGBA color = std_msgs::ColorRGBA();
         color.r = 254.0f;
         color.g = 254.0f;

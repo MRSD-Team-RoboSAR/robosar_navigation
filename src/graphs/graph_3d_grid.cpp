@@ -10,7 +10,8 @@ Graph3DGrid::Graph3DGrid(): allow_unknown(false) {
     // @ TODO Indraneel This is called only once 
     // but if the map is changing then this need to be called whenever underlying costmap gets updated
     scaleCostMap();
-    propogation_model = {{1,0}, {0,1}, {-1,0}, {0,-1}};
+    //propogation_model = {{1,0}, {0,1}, {-1,0}, {0,-1}};
+    propogation_model = {{1,0}, {0,1}, {-1,0}, {0,-1}, {1,1},{-1,1},{1,-1},{-1,-1}, {0,0}};
     propogation_speed = 0.5; // m/s
 }
 
@@ -120,6 +121,9 @@ float Graph3DGrid::getDistanceBwNodes(Node node1, Node node2) {
 
     // Manhattan distance
     return std::fabs(point2[0]-point1[0]) + std::fabs(point2[1]-point1[1]);
+
+    // Euclidean distance
+    return hypot(point2[0]-point1[0],point2[1]-point1[1]);
 }
 
 std::vector<Graph3DGrid::Node> Graph3DGrid::getNeighbours(Node n) {
@@ -136,7 +140,8 @@ std::vector<Graph3DGrid::Node> Graph3DGrid::getNeighbours(Node n) {
         // Check if within boundary
         if(nx >=0 && nx <size_width && ny>=0 && ny<size_height)
         {   
-            Node neighbour(nx,ny,n.t + resolution/propogation_speed); 
+            // Time multiplied by 2 to account for execution errors
+            Node neighbour(nx,ny,n.t + 2*(resolution/propogation_speed)); 
             // Check if collision free
             if(!collisionCheck(neighbour)) {
                 neighbours.push_back(neighbour);

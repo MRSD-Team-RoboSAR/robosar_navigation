@@ -6,8 +6,8 @@
 char* Costmap2D::cost_translation_table_ = NULL;
 
 Costmap2D::Costmap2D() : nh_(""), size_width(0), size_height(0), track_unknown_space(true), 
-                            trinary_costmap(true),costmap_(NULL), inflation_radius(0.5), inscribed_radius(0.1),
-                            inflation_cost_scaling_factor(10.0) {
+                            trinary_costmap(true),costmap_(NULL), inflation_radius(5), inscribed_radius(0.1),
+                            inflation_cost_scaling_factor(5.0) {
 
     ROS_INFO("Requesting the map...");
     map_sub_ = nh_.subscribe("map", 1, &Costmap2D::incomingMap, this);

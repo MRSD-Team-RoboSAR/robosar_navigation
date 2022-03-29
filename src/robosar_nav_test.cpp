@@ -1,7 +1,6 @@
 // Created by Indraneel on 7/03/22
 
 #include <ros/ros.h>
-#include "graph_2d_grid.hpp"
 #include "graph_3d_grid.hpp"
 
 #include "multi_astar.hpp"
@@ -18,13 +17,18 @@ int main(int argc, char **argv)
   std::vector<double*> currPos;
   std::vector<double*> targetPos;
 
-  double goal1[] = {19.0,20.0,0.0};
-  double start1[] = {18.0,25.0,0.0};
+  //double goal1[] = {19.0,20.0,0.0};
+  //double start1[] = {18.0,25.0,0.0};
+
+  double goal1[] = {0.2,0.2,0.0};
+  double start1[] = {-0.2,-0.2,0.0};
   currPos.push_back(start1);
   targetPos.push_back(goal1);
 
-  double goal2[] = {19.0,20.0,0.0};
-  double start2[] = {18.0,25.0,0.0};
+  //double goal2[] = {19.0,21.0,0.0};
+  //double start2[] = {22.0,21.0,0.0};
+   double goal2[] = {-0.2,0.2,0.0};
+  double start2[] = {0.2,-0.2,0.0};
   currPos.push_back(start2);
   targetPos.push_back(goal2);
   
