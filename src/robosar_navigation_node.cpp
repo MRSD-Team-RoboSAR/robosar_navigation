@@ -2,7 +2,6 @@
 
 #include <ros/ros.h>
 #include "graph_2d_grid.hpp"
-#include "astar.hpp"
 #include "graph_3d_grid.hpp"
 
 #include "multi_astar.hpp"

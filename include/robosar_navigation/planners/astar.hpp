@@ -19,7 +19,7 @@
 class AStar {
 
 public:
-    AStar(std::string ns_, Graph* graph,double* g, double* s) : planner_initialised(false),pg(graph), heuristic_weight(10.0f), nh_("~/"+ns_),
+    AStar(std::string ns_, Graph* graph,double* g, double* s, ros::NodeHandle *nh) : planner_initialised(false),pg(graph), heuristic_weight(10.0f),
                                                     goalNode(-1,-1,0.0), startNode(-1,-1, 0.0) {
 
         goal = g;
@@ -48,9 +48,9 @@ public:
         queue.push(sn);
 
         // traj publisher for rviz
-        traj_pub_ = nh_.advertise<nav_msgs::Path>("plan", 1);
+        traj_pub_ = nh->advertise<nav_msgs::Path>(ns_+"/plan", 1);
         // start and goal publisher for rviz
-        endpoint_pub_ = nh_.advertise<visualization_msgs::MarkerArray>("endpoints", 1);
+        endpoint_pub_ = nh->advertise<visualization_msgs::MarkerArray>(ns_+"/endpoints", 1);
 
         planner_initialised = true;
     }
@@ -63,10 +63,10 @@ public:
         int cycle = 0;
         bool path_found = false;
 
-        publishEndpoints();
-
         if(!planner_initialised)
         return false;
+
+        publishEndpoints();
 
         // do main cycle
         for (; cycle < cycles && !queue.empty(); cycle++) // go for this many cycles or if queue is over
@@ -236,7 +236,6 @@ private:
                       CompareClass> queue;
     ros::Publisher traj_pub_;
     ros::Publisher endpoint_pub_;
-    ros::NodeHandle nh_;
 };
 
 #endif //ASTAR_HPP

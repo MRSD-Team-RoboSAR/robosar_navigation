@@ -52,15 +52,15 @@ bool Graph3DGrid::collisionCheck(Node n) {
     // TODO
     if(costmap_[toNodeID(n)]>=COST_OBS_ROS)
         return true;
-
+    
+    std::vector<double> nodeMapFrame = toNodeInfo(n);
     for(auto traj_map:traj_cache) {
 
         // Lookup each trajectory using time lookup
         if(traj_map.find(n.t)!=traj_map.end())
         {
             std::pair<double,double> closest_point = traj_map[n.t];
-
-            if(hypot(closest_point.first-n.x,closest_point.second-n.y)<COLLISION_THRESHOLD)
+            if(hypot(closest_point.first-nodeMapFrame[0],closest_point.second-nodeMapFrame[1])<COLLISION_THRESHOLD)
                 return true;
         }
     }
