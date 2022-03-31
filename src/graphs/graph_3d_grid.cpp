@@ -10,8 +10,8 @@ Graph3DGrid::Graph3DGrid(): allow_unknown(false) {
     // @ TODO Indraneel This is called only once 
     // but if the map is changing then this need to be called whenever underlying costmap gets updated
     scaleCostMap();
-    //propogation_model = {{1,0}, {0,1}, {-1,0}, {0,-1}};
-    propogation_model = {{1,0}, {0,1}, {-1,0}, {0,-1}, {1,1},{-1,1},{1,-1},{-1,-1}, {0,0}};
+    //propogation_model = {{1,0}, {0,1}, {-1,0}, {0,-1},{0,0}};
+    propogation_model = {{1,0}, {0,1}, {-1,0}, {0,-1}, {1,1},{-1,1},{1,-1},{-1,-1},{0,0}};
     propogation_speed = 0.5; // m/s
 }
 
@@ -123,7 +123,7 @@ float Graph3DGrid::getDistanceBwNodes(Node node1, Node node2) {
     return std::fabs(point2[0]-point1[0]) + std::fabs(point2[1]-point1[1]);
 
     // Euclidean distance
-    return hypot(point2[0]-point1[0],point2[1]-point1[1]);
+    //return hypot(point2[0]-point1[0],point2[1]-point1[1]);
 }
 
 std::vector<Graph3DGrid::Node> Graph3DGrid::getNeighbours(Node n) {

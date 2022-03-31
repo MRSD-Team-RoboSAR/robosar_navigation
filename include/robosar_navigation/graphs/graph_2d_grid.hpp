@@ -15,7 +15,7 @@
 // graph cost values are set to
 // COST_NEUTRAL + COST_FACTOR * costmap_cost_value.
 
-#define COST_NEUTRAL 50		// Set this to "open space" value
+#define COST_NEUTRAL 5		// Set this to "open space" value
 #define COST_FACTOR 0.8		// Used for translating costs in NavFn::setCostmap()
 
 class Graph2DGrid : Costmap2D {

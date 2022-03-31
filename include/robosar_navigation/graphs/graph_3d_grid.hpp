@@ -15,7 +15,7 @@
 // graph cost values are set to
 // COST_NEUTRAL + COST_FACTOR * costmap_cost_value.
 
-#define COST_NEUTRAL 50		// Set this to "open space" value
+#define COST_NEUTRAL 5		// Set this to "open space" value
 #define COST_FACTOR 0.8		// Used for translating costs in NavFn::setCostmap()
 
 #define COLLISION_THRESHOLD 0.14 // Twice the radius of khepera robot
@@ -45,8 +45,10 @@ public:
             {
                 if(x!=n.x)
                     return x<n.x;
-                else 
+                else if(y!=n.y)
                     return y<n.y;
+                else 
+                    return t<n.t;
             }
             
             int x; 

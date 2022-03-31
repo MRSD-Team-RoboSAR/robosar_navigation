@@ -19,7 +19,7 @@
 class AStar {
 
 public:
-    AStar(std::string ns_, Graph* graph,double* g, double* s, ros::NodeHandle *nh) : planner_initialised(false),pg(graph), heuristic_weight(10.0f),
+    AStar(std::string ns_, Graph* graph,double* g, double* s, ros::NodeHandle *nh) : planner_initialised(false),pg(graph), heuristic_weight(100.0f),
                                                     goalNode(-1,-1,0.0), startNode(-1,-1, 0.0) {
 
         goal = g;
@@ -45,6 +45,7 @@ public:
 
         // Add start to the priority queue
         std::pair<float,Graph::Node> sn = std::make_pair(0.0f,startNode);
+        potarr[startNode] = 0.0f;
         queue.push(sn);
 
         // traj publisher for rviz
@@ -88,28 +89,35 @@ public:
             }
 
             std::vector<Graph::Node> neighbours = pg->getNeighbours(qn.second);
-            ROS_INFO("%ld",neighbours.size());
+            ROS_DEBUG("%d %d",qn.second.x,qn.second.y);
             // Graph has already done collision checking and stuff
             for(auto neighbour:neighbours) {
                 
                 // Check if not already visited
                 if(pending.find(neighbour)==pending.end()) {
                     
-                    // cost = cost_so_far + cost_cell + heuristic value
-                    float new_pot = qn.first + (float)(pg->lookUpCost(neighbour)) + heuristic_weight*(pg->getDistanceBwNodes(neighbour,goalNode));
+                    float new_pot;
+                    if(true) //neighbour.x !=qn.second.x || neighbour.y!=qn.second.y)
+                        new_pot = potarr[qn.second] + (float)(pg->lookUpCost(neighbour));
+                    else
+                        new_pot =  potarr[qn.second]  + (float)(pg->lookUpCost(neighbour))/5.0f;
+    
+                    ROS_DEBUG("Plan : %f %f %f %f", qn.first,potarr[qn.second],heuristic_weight*(pg->getDistanceBwNodes(neighbour,goalNode)),pg->getDistanceBwNodes(neighbour,goalNode));
 
                     // Check if potential improved
                     if(potarr.find(neighbour)==potarr.end() || new_pot<potarr[neighbour])
                     {
                         potarr[neighbour] = new_pot;
-                        std::pair<float,Graph::Node> neighbour_node = std::make_pair(new_pot,neighbour);
+                        // cost = cost_so_far + cost_cell + heuristic value
+                        float node_cost = new_pot + heuristic_weight*(pg->getDistanceBwNodes(neighbour,goalNode));
+                        std::pair<float,Graph::Node> neighbour_node = std::make_pair(node_cost,neighbour);
                         queue.push(neighbour_node);
                         cameFrom[neighbour] = qn.second;
                     }
                     else
                         ROS_WARN("Potential did not improve!!");
 
-                    ROS_INFO("%d %d %f %f\n",neighbour.x,neighbour.y,new_pot,potarr[neighbour]);
+                    //ROS_INFO("%d %d %f %f\n",neighbour.x,neighbour.y,new_pot,potarr[neighbour]);
 
                 }
             }
