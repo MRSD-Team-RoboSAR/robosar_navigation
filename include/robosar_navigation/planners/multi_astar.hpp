@@ -5,6 +5,9 @@
 #include <vector>
 #include <ros/ros.h>
 #include "astar.hpp"
+#include <visualization_msgs/MarkerArray.h>
+#include <visualization_msgs/Marker.h>
+
 using namespace std;
 
 class MultiAStar {
@@ -17,12 +20,14 @@ public:
         this->curr_Pos = currPos;
         this->tar_Pos = targetPos;
         agentsNames = agents;
+        traj_pub_ = nh_.advertise<visualization_msgs::MarkerArray>("multi_astar_vis", 1);
     }
 
     ~MultiAStar(){
     }
 
     bool run_multi_astar(){
+        vector<AStar> planner_vec;
         assignPriority(agentId);
         for(int i=0;i<numAgents;i++){
             int index = agentId[i];
@@ -31,12 +36,71 @@ public:
             AStar planner(agentsNames[index],pg,goal,start,&nh_);
             ros::Duration(1.0).sleep();
             bool planning_success = planner.run_planner(pg->getNumNodes());
-
+            if(planning_success)
+                planner_vec.push_back(planner);
         }
+
+        visualise_paths(planner_vec);
         return false;
     }
 
+    void visualise_paths(vector<AStar> planner_vec)
+    {
+        bool vis_active = false;
+        int id = 0;
+        int it = 0;
+
+        visualization_msgs::Marker marker;
+        visualization_msgs::MarkerArray marker_arr;
+
+        // common info
+        marker.header.stamp = ros::Time::now();
+        marker.header.frame_id = pg->getFrame();
+        marker.type = 2; //sphere
+        marker.lifetime = ros::Duration();
+        marker.action = 0; // add
+        marker.pose.orientation.w = 0;
+
+        marker.scale.x = 0.1f;
+        marker.scale.y = 0.1f;
+        marker.scale.z = 0.1f;
+        std_msgs::ColorRGBA color = std_msgs::ColorRGBA();
+        color.r = 254.0f;
+        color.g = 254.0f;
+        color.b = 254.0f;
+        color.a = 1;
+        marker.color = color;
+        marker.mesh_use_embedded_materials = false;
+        marker.pose.orientation.x = 0;
+        marker.pose.orientation.y = 0;
+        marker.pose.orientation.z = 0;
+        marker.pose.orientation.w = 1;
+
+        ROS_INFO("Visualising trajectory for %ld planners\n",planner_vec.size());
+        do {
+            vis_active = false;
+            for(auto planner:planner_vec)
+            {
+                if(it<planner.trajectory.size())
+                {
+                    // Add point to marker array
+                    marker.id = id++;
+                    marker.pose.position.x = planner.trajectory[it][0];
+                    marker.pose.position.y = planner.trajectory[it][1];
+                    marker.pose.position.z = 0.0;
+                    marker_arr.markers.push_back(marker);
+                    vis_active = true;
+                }
+            }
+            // Publish marker array
+            traj_pub_.publish(marker_arr);
+            ros::Duration(0.1).sleep();
+            it++;
+        } while (vis_active && ros::ok());
+    }
+
 private:
+    ros::Publisher traj_pub_;
     ros::NodeHandle nh_;
     int numAgents;
     Graph* pg;

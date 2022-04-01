@@ -19,7 +19,7 @@
 class AStar {
 
 public:
-    AStar(std::string ns_, Graph* graph,double* g, double* s, ros::NodeHandle *nh) : planner_initialised(false),pg(graph), heuristic_weight(100.0f),
+    AStar(std::string ns_, Graph* graph,double* g, double* s, ros::NodeHandle *nh) : planner_initialised(false),pg(graph), heuristic_weight(10.0f),
                                                     goalNode(-1,-1,0.0), startNode(-1,-1, 0.0) {
 
         goal = g;
@@ -97,7 +97,7 @@ public:
                 if(pending.find(neighbour)==pending.end()) {
                     
                     float new_pot;
-                    if(true) //neighbour.x !=qn.second.x || neighbour.y!=qn.second.y)
+                    if(neighbour.x !=qn.second.x || neighbour.y!=qn.second.y)
                         new_pot = potarr[qn.second] + (float)(pg->lookUpCost(neighbour));
                     else
                         new_pot =  potarr[qn.second]  + (float)(pg->lookUpCost(neighbour))/5.0f;
@@ -131,7 +131,7 @@ public:
 
             // Retrace path
             std::vector<double> point = pg->toNodeInfo(goalNode);
-            trajectory.push_back(point);
+            trajectory.insert(trajectory.begin(),point);
             traj_map[point[2]] = std::make_pair(point[0],point[1]);
             ROS_INFO("%ld : %f %f %f",trajectory.size(),point[0],point[1],point[2]);
             Graph::Node parentNode = goalNode;
@@ -139,7 +139,7 @@ public:
             {
                 parentNode = cameFrom[parentNode];
                 point = pg->toNodeInfo(parentNode);
-                trajectory.push_back(point);
+                trajectory.insert(trajectory.begin(),point);
                 traj_map[point[2]] = std::make_pair(point[0],point[1]);
                 ROS_INFO("%ld : %f %f %f",trajectory.size(),point[0],point[1],point[2]);
             } while (!(parentNode==startNode));
