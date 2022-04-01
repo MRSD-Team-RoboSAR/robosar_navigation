@@ -10,6 +10,7 @@
 #include <visualization_msgs/MarkerArray.h>
 #include <visualization_msgs/Marker.h>
 #include <unordered_map>
+#include <unordered_set>
 
 // Underlying graph datatype can be changed here
 #undef Graph
@@ -81,8 +82,7 @@ public:
             pending.insert(qn.second);
 
             // Check if reached goal
-            if(qn.second == goalNode)
-            {
+            if(pg->getDistanceBwNodes(qn.second,goalNode)==0) {
                 goalNode = qn.second;
                 path_found = true;
                 break;
@@ -102,14 +102,17 @@ public:
                     else
                         new_pot =  potarr[qn.second]  + (float)(pg->lookUpCost(neighbour))/5.0f;
     
-                    ROS_DEBUG("Plan : %f %f %f %f", qn.first,potarr[qn.second],heuristic_weight*(pg->getDistanceBwNodes(neighbour,goalNode)),pg->getDistanceBwNodes(neighbour,goalNode));
+                    ROS_DEBUG("Plan : %f %f %f %d", qn.first,
+                                                    potarr[qn.second],
+                                                    heuristic_weight*((float)(pg->getDistanceBwNodes(neighbour,goalNode))),
+                                                    pg->getDistanceBwNodes(neighbour,goalNode));
 
                     // Check if potential improved
                     if(potarr.find(neighbour)==potarr.end() || new_pot<potarr[neighbour])
                     {
                         potarr[neighbour] = new_pot;
                         // cost = cost_so_far + cost_cell + heuristic value
-                        float node_cost = new_pot + heuristic_weight*(pg->getDistanceBwNodes(neighbour,goalNode));
+                        float node_cost = new_pot + heuristic_weight*((float)(pg->getDistanceBwNodes(neighbour,goalNode)));
                         std::pair<float,Graph::Node> neighbour_node = std::make_pair(node_cost,neighbour);
                         queue.push(neighbour_node);
                         cameFrom[neighbour] = qn.second;
@@ -142,7 +145,8 @@ public:
                 trajectory.insert(trajectory.begin(),point);
                 traj_map[point[2]] = std::make_pair(point[0],point[1]);
                 ROS_INFO("%ld : %f %f %f",trajectory.size(),point[0],point[1],point[2]);
-            } while (!(parentNode==startNode));
+            } while (!(pg->getDistanceBwNodes(parentNode,startNode)==0));
+
             publishPlan();
             pg->addTrajCache(traj_map);
         }
@@ -228,9 +232,9 @@ public:
 
     std::vector<std::vector<double>> trajectory;
 private:
-    std::map<Graph::Node,float> potarr;
-    std::map<Graph::Node,Graph::Node> cameFrom;
-    std::set<Graph::Node> pending;
+    std::unordered_map<Graph::Node,float,Graph::Node::hashFunction> potarr;
+    std::unordered_map<Graph::Node,Graph::Node,Graph::Node::hashFunction> cameFrom;
+    std::unordered_set<Graph::Node,Graph::Node::hashFunction> pending;
     Graph* pg;
     Graph::Node goalNode;
     Graph::Node startNode;

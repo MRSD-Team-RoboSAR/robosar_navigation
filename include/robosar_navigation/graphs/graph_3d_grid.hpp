@@ -38,18 +38,20 @@ public:
 
             bool operator==(const Node &n) const
             {
-                return ((n.x==x) && (n.y==y));
+                return ((n.x==x) && (n.y==y) && (n.t==t));
             }
 
-            bool operator<(const Node &n) const
-            {
-                if(x!=n.x)
-                    return x<n.x;
-                else if(y!=n.y)
-                    return y<n.y;
-                else 
-                    return t<n.t;
-            }
+            // Hash function used by boost data structures
+            struct hashFunction {
+                std::size_t operator()(const Node&n) const {
+                    std::size_t seed = 0;
+                    boost::hash_combine(seed,n.x);
+                    boost::hash_combine(seed,n.y);
+                    boost::hash_combine(seed,n.t);
+
+                    return seed;
+                };
+            };
             
             int x; 
             int y;
@@ -61,7 +63,7 @@ public:
     std::vector<double> toNodeInfo(Node n);
     int getNumNodes();
     Node getNode(double point[2]); 
-    float getDistanceBwNodes(Node node1, Node node2);
+    int getDistanceBwNodes(Node node1, Node node2);
     std::vector<Node> getNeighbours(Node node);
     int lookUpCost(Node node);
     std::string getFrame(void);

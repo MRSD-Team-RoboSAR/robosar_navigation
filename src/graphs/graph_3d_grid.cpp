@@ -114,11 +114,11 @@ int Graph3DGrid::getNumNodes() {
     return size_width*size_height;
 }
 
-float Graph3DGrid::getDistanceBwNodes(Node node1, Node node2) {
+int Graph3DGrid::getDistanceBwNodes(Node node1, Node node2) {
     // TODO
 
     // Manhattan distance
-    return std::fabs(node1.x-node2.x) + std::fabs(node1.y-node2.y);
+    return std::abs(node1.x-node2.x) + std::abs(node1.y-node2.y);
 
     // Euclidean distance
     //return hypot(point2[0]-point1[0],point2[1]-point1[1]);
