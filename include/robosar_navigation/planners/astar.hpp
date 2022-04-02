@@ -9,6 +9,7 @@
 #include <nav_msgs/Path.h>
 #include <visualization_msgs/MarkerArray.h>
 #include <visualization_msgs/Marker.h>
+#include <geometry_msgs/Point.h>
 #include <unordered_map>
 #include <unordered_set>
 
@@ -53,7 +54,10 @@ public:
         traj_pub_ = nh->advertise<nav_msgs::Path>(ns_+"/plan", 1);
         // start and goal publisher for rviz
         endpoint_pub_ = nh->advertise<visualization_msgs::MarkerArray>(ns_+"/endpoints", 1);
-
+        // expansion visualisation rviz
+        expansion_pub_ = nh->advertise<visualization_msgs::Marker>(ns_+"/expansion", 1);
+        
+        initialiseExpansionMarker();
         planner_initialised = true;
     }
 
@@ -115,6 +119,7 @@ public:
                         float node_cost = new_pot + heuristic_weight*((float)(pg->getDistanceBwNodes(neighbour,goalNode)));
                         std::pair<float,Graph::Node> neighbour_node = std::make_pair(node_cost,neighbour);
                         queue.push(neighbour_node);
+                        //publishExpansion(NODE_FRONTIER,neighbour);
                         cameFrom[neighbour] = qn.second;
                     }
                     else
@@ -219,6 +224,70 @@ public:
         endpoint_pub_.publish(marker_arr);
     }
 
+    typedef enum expNodeType {
+        
+        NODE_FRONTIER,
+        NODE_CLOSED
+
+    } expNodeType_e;
+
+    void initialiseExpansionMarker() {
+
+        // common info
+        exp_marker.header.stamp = ros::Time::now();
+        exp_marker.header.frame_id = pg->getFrame();
+        exp_marker.type = 6; //cube list
+        exp_marker.lifetime = ros::Duration();
+        exp_marker.action = 0; // add
+        
+        exp_marker.pose.orientation.x = 0;
+        exp_marker.pose.orientation.y = 0;
+        exp_marker.pose.orientation.z = 0;
+        exp_marker.pose.orientation.w = 1;
+        exp_marker.scale.x = 0.1f;
+        exp_marker.scale.y = 0.1f;
+        exp_marker.scale.z = 0.1f;
+        exp_marker.id = 1;
+        exp_marker.ns = "astar_expand";
+        exp_marker.points.clear();
+        exp_marker.colors.clear();
+        
+    }
+
+
+     void publishExpansion(expNodeType_e node_type, Graph::Node n) {
+        
+        static int marker_id = 0;
+
+        std_msgs::ColorRGBA color = std_msgs::ColorRGBA();
+        if(node_type == NODE_CLOSED) {
+            color.r = 0.0f;
+            color.g = 254.0f;
+            color.b = 0.0f;
+        }
+        else if(node_type == NODE_FRONTIER) {
+            color.r = 0.0f;
+            color.g = 0.0f;
+            color.b = 0.0f;
+        }
+        color.r = 0.0f;
+        color.g = 250.0f;
+        color.b = 0.0f;
+        color.a = 1.0;
+        exp_marker.colors.push_back(color);
+
+         // Add node
+        geometry_msgs::Point new_cube = geometry_msgs::Point(); 
+        std::vector<double> nodeInfo = pg->toNodeInfo(n);
+        new_cube.x = nodeInfo[0];
+        new_cube.y = nodeInfo[1];
+        new_cube.z = 0.0;
+        exp_marker.points.push_back(new_cube);
+        expansion_pub_.publish(exp_marker);
+        ros::Duration(0.01).sleep();
+     }
+
+
     /** @brief : Compare class for the priority queue */
   class CompareClass {
   public:
@@ -246,8 +315,10 @@ private:
     std::priority_queue<std::pair<float, Graph::Node>,
                       std::vector<std::pair<float, Graph::Node>>,
                       CompareClass> queue;
+    visualization_msgs::Marker exp_marker;
     ros::Publisher traj_pub_;
     ros::Publisher endpoint_pub_;
+    ros::Publisher expansion_pub_;
 };
 
 #endif //ASTAR_HPP

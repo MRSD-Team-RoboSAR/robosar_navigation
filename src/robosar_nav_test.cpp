@@ -32,8 +32,8 @@ int main(int argc, char **argv)
   currPos.push_back(start2);
   targetPos.push_back(goal2);
 
-  double goal3[] = {17.0,14.0,0.0};
-  double start3[] = {21.0,25.0,0.0};
+  double start3[] = {17.0,14.0,0.0};
+  double goal3[] = {19.0,25.0,0.0};
   //double goal2[] = {-0.2,0.2,0.0};
   //double start2[] = {0.2,-0.2,0.0};
   currPos.push_back(start3);
