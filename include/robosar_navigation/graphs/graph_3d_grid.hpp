@@ -68,6 +68,7 @@ public:
     int lookUpCost(Node node);
     std::string getFrame(void);
     void addTrajCache(std::map<double,std::pair<double,double>> trajectory);
+    void clearTrajCache(void);
 
 private:
     void scaleCostMap();

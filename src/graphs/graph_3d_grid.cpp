@@ -163,3 +163,8 @@ void Graph3DGrid::addTrajCache(std::map<double,std::pair<double,double>> traject
 
     traj_cache.push_back(trajectory);
 }
+
+void Graph3DGrid::clearTrajCache(void) {
+
+    traj_cache.clear();
+}
