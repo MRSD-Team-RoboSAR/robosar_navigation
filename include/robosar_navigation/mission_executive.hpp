@@ -19,6 +19,8 @@ public:
         status_subscriber_ = nh_.subscribe("/robosar_agent_bringup/status", 1, &MissionExecutive::statusCallback, this);
         // Get latest fleet info from agent bringup
         status_client = nh_.serviceClient<robosar_messages::agent_status>("fleet_status");
+
+        fleet_info = getFleetStatusInfo();
         
         fleet_status_outdated = false;
     }
@@ -30,10 +32,31 @@ public:
 
 private:
 
+    std::set<string> getFleetStatusInfo() {
+
+        robosar_messages::agent_status srv;
+
+        if (status_client.call(srv)) {
+            std::vector<string> agentsVec = srv.response.agents_active;
+            std::set<string> agentsSet;
+
+            for(auto agent:agentsVec)
+                agentsSet.insert(agent);
+
+            return agentsSet;
+        }
+        else
+        {
+            ROS_ERROR("Failed to call fleet info service");
+            return fleet_info;
+        }
+    }
+
     void statusCallback(const std_msgs::Bool &status_msg) {
         fleet_status_outdated = true;
     }
 
+    std::set<string> fleet_info;
     ros::ServiceClient status_client; 
     Graph3DGrid gridmap;
     ros::Subscriber status_subscriber_;
