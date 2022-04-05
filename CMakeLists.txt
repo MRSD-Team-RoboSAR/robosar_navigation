@@ -140,6 +140,8 @@ add_library(${PROJECT_NAME}
 ## The recommended prefix ensures that target names across packages don't collide
 add_executable(${PROJECT_NAME}_node src/robosar_nav_test.cpp)
 
+add_executable(robosar_mission_execute src/robosar_mission_execute.cpp)
+
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
 ## target back to the shorter version for ease of user use
@@ -156,6 +158,13 @@ add_executable(${PROJECT_NAME}_node src/robosar_nav_test.cpp)
    ${PROJECT_NAME}
    ${Boost_LIBRARIES}
  )
+
+ target_link_libraries(robosar_mission_execute
+ ${catkin_LIBRARIES}
+ ${PROJECT_NAME}
+ ${Boost_LIBRARIES}
+)
+
 
 #############
 ## Install ##
