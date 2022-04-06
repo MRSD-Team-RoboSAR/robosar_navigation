@@ -57,6 +57,15 @@ private:
                 ros::Duration(2.0).sleep();
                 bool status = multi_astar.run_multi_astar();
 
+                for(auto agent:agents){
+                    actionlib::SimpleActionClient<robosar_controller::RobosarControllerAction> ac(agent, true);
+                    ROS_INFO("Waiting for action server to start.");
+                    // wait for the action server to start
+                    ac.waitForServer(); //will wait for infinite time
+
+                    ROS_INFO("Action server started, sending goal.");
+                    robosar_controller::RobosarControllerGoal goal;
+                }
                 agents.clear();
                 currPos.clear();
                 targetPos.clear();
