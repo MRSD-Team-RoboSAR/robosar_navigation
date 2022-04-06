@@ -30,6 +30,7 @@ public:
         
         fleet_status_outdated = false;
         
+        // Running our executive
         run_mission();
     }
 
@@ -42,7 +43,27 @@ private:
 
     void run_mission() {
 
+        ros::Rate loop_rate(10);
 
+        while (ros::ok()) {
+            if(areControllersIdle() && !agents.empty())
+            {
+                // Process tasks from task allocator
+                gridmap.clearTrajCache();
+                MultiAStar multi_astar(&gridmap,currPos,targetPos,agents);
+
+                ros::Duration(2.0).sleep();
+                bool status = multi_astar.run_multi_astar();
+
+                agents.clear();
+                currPos.clear();
+                targetPos.clear();
+
+            }
+            ros::spinOnce();
+
+            loop_rate.sleep();
+        }
 
     }
 

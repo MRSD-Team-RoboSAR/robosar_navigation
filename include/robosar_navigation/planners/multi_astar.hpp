@@ -40,7 +40,7 @@ public:
                 planner_vec.push_back(planner);
         }
 
-        visualise_paths(planner_vec);
+        //visualise_paths(planner_vec);
         return false;
     }
 
