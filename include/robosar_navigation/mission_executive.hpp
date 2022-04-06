@@ -11,6 +11,8 @@
 #include "lg_action_server.hpp"
 
 #include "robosar_messages/task_allocation.h"
+#include "actionlib_msgs/GoalStatus.h"
+
 class MissionExecutive {
 
 public:
@@ -68,6 +70,12 @@ private:
     }
 
     bool areControllersIdle() {
+        std::map<std::string,LGControllerAction*>::iterator it;
+        for (it = controller_map.begin(); it != controller_map.end(); it++)
+        {
+            if(it->second->as_.isActive())
+                return false;
+        }
         return true;
     }
 
