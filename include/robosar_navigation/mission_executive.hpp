@@ -39,6 +39,9 @@ public:
 
     ~MissionExecutive() {
 
+        // destroy controller servers
+        for(std::map<std::string,LGControllerAction*>::iterator it=controller_map.begin();it!= controller_map.end();it++ )
+            delete it->second;
     }
 
 
@@ -62,7 +65,7 @@ private:
                     
                     // Check if planning was successful
                     if(multi_astar.trajectory_map.find(agent)!=multi_astar.trajectory_map.end())  {
-                        
+
                         actionlib::SimpleActionClient<robosar_controller::RobosarControllerAction> ac(agent, true);
                         ROS_INFO("Waiting for action server to start.");
                         // wait for the action server to start
@@ -128,9 +131,9 @@ private:
         
         for(auto agent:new_agents){
             // Create new controller server
-            LGControllerAction controller(agent);
+            LGControllerAction *controller = new LGControllerAction(agent);
             // save it in the map
-            controller_map[agent] = &controller;
+            controller_map[agent] = controller;
         }
         return true;
     }
