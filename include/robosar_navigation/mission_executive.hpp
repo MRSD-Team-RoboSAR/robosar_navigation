@@ -10,6 +10,7 @@
 #include "robosar_messages/agent_status.h"
 #include "lg_action_server.hpp"
 
+#include "robosar_messages/task_allocation.h"
 class MissionExecutive {
 
 public:
@@ -27,11 +28,15 @@ public:
         createControllerActionServers(fleet_info);
         
         fleet_status_outdated = false;
+
+        task_allocation_subscriber = nh_.subscribe("task_allocation", 1, &MissionExecutive::taskAllocationCallback,this);
+
     }
 
     ~MissionExecutive() {
 
     }
+
 
 
 private:
@@ -74,8 +79,25 @@ private:
     std::map<std::string,LGControllerAction*> controller_map;
     std::set<std::string> fleet_info;
     ros::ServiceClient status_client; 
+
+    void taskAllocationCallback(robosar_messages::task_allocation ta_msg){
+        agents.clear();
+        currPos.clear();
+        targetPos.clear();
+        for(int i=0;i<ta_msg.id.size();i++){
+            double goal[] = {ta_msg.goalx[i],ta_msg.goaly[i],0.0};
+            double start[] = {ta_msg.startx[i],ta_msg.starty[i],0.0};
+            agents.push_back(ta_msg.id[i]);
+            currPos.push_back(start);
+            targetPos.push_back(goal);
+        }
+    }
+
+    std::vector<std::string> agents;
+    std::vector<double*> currPos;
+    std::vector<double*> targetPos;
     Graph3DGrid gridmap;
-    ros::Subscriber status_subscriber_;
+    ros::Subscriber status_subscriber_,task_allocation_subscriber;
     ros::NodeHandle nh_;
     bool fleet_status_outdated;
 };
