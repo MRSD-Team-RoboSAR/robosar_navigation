@@ -12,6 +12,7 @@
 
 #include "robosar_messages/task_allocation.h"
 #include "actionlib_msgs/GoalStatus.h"
+#include <actionlib/client/simple_action_client.h>
 
 class MissionExecutive {
 
@@ -58,14 +59,29 @@ private:
                 bool status = multi_astar.run_multi_astar();
 
                 for(auto agent:agents){
-                    actionlib::SimpleActionClient<robosar_controller::RobosarControllerAction> ac(agent, true);
-                    ROS_INFO("Waiting for action server to start.");
-                    // wait for the action server to start
-                    ac.waitForServer(); //will wait for infinite time
+                    
+                    // Check if planning was successful
+                    if(multi_astar.trajectory_map.find(agent)!=multi_astar.trajectory_map.end())  {
+                        
+                        actionlib::SimpleActionClient<robosar_controller::RobosarControllerAction> ac(agent, true);
+                        ROS_INFO("Waiting for action server to start.");
+                        // wait for the action server to start
+                        ac.waitForServer(); //will wait for infinite time
 
-                    ROS_INFO("Action server started, sending goal.");
-                    robosar_controller::RobosarControllerGoal goal;
+                        ROS_INFO("Action server started, sending goal.");
+                        robosar_controller::RobosarControllerGoal goal;
+                        
+                        // Get the trajectory from the map
+                        std::vector<geometry_msgs::PoseStamped> traj_agent =  multi_astar.trajectory_map[agent];
+                        for(auto pose:traj_agent)
+                            goal.path.poses.push_back(pose);
+  
+                        // Send the goal
+                         ac.sendGoal(goal);
+                    }
                 }
+
+                // Clear out old tasks
                 agents.clear();
                 currPos.clear();
                 targetPos.clear();

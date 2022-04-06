@@ -36,8 +36,26 @@ public:
             AStar planner(agentsNames[index],pg,goal,start,&nh_);
             ros::Duration(1.0).sleep();
             bool planning_success = planner.run_planner(pg->getNumNodes());
-            if(planning_success)
+
+            std::vector<geometry_msgs::PoseStamped> traj;
+            if(planning_success) {
                 planner_vec.push_back(planner);
+
+                // Create the trajectory
+                for(auto poses:planner.trajectory) {
+
+                        geometry_msgs::PoseStamped pose;
+                        pose.header.seq=0;
+                        pose.header.stamp = ros::Time::now();
+                        pose.header.frame_id = "map";
+                        pose.pose.position.x = poses[0];
+                        pose.pose.position.y = poses[1];
+                        pose.pose.position.z = poses[2];
+                        pose.pose.orientation.w = 1.0;
+                        traj.push_back(pose);
+                }
+                trajectory_map[agentsNames[index]] = traj;
+            }
         }
 
         //visualise_paths(planner_vec);
@@ -99,7 +117,10 @@ public:
         } while (vis_active && ros::ok());
     }
 
+    std::map<string,std::vector<geometry_msgs::PoseStamped>> trajectory_map;
+    
 private:
+
     ros::Publisher traj_pub_;
     ros::NodeHandle nh_;
     int numAgents;
