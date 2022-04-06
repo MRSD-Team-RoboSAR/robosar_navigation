@@ -8,6 +8,7 @@
 #include <ros/console.h>
 #include <std_msgs/Bool.h>
 #include "robosar_messages/agent_status.h"
+#include "lg_action_server.hpp"
 
 class MissionExecutive {
 
@@ -21,6 +22,9 @@ public:
         status_client = nh_.serviceClient<robosar_messages::agent_status>("fleet_status");
 
         fleet_info = getFleetStatusInfo();
+
+        // Create controllers for these agents
+        createControllerActionServers(fleet_info);
         
         fleet_status_outdated = false;
     }
@@ -28,7 +32,7 @@ public:
     ~MissionExecutive() {
 
     }
-        
+
 
 private:
 
@@ -52,11 +56,23 @@ private:
         }
     }
 
+    bool createControllerActionServers(std::set<std::string> new_agents) {
+        
+        for(auto agent:new_agents){
+            // Create new controller server
+            LGControllerAction controller(agent);
+            // save it in the map
+            controller_map[agent] = &controller;
+        }
+        return true;
+    }
+
     void statusCallback(const std_msgs::Bool &status_msg) {
         fleet_status_outdated = true;
     }
 
-    std::set<string> fleet_info;
+    std::map<std::string,LGControllerAction*> controller_map;
+    std::set<std::string> fleet_info;
     ros::ServiceClient status_client; 
     Graph3DGrid gridmap;
     ros::Subscriber status_subscriber_;

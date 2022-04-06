@@ -13,11 +13,12 @@ find_package(catkin REQUIRED COMPONENTS
   std_msgs
   tf
   robosar_messages
+  robosar_controller
 )
 
 ## System dependencies are found with CMake's conventions
 find_package(Boost REQUIRED COMPONENTS system)
-
+find_package(orocos_kdl REQUIRED)
 
 ## Uncomment this if the package has a setup.py. This macro ensures
 ## modules and global scripts declared therein get installed
@@ -122,6 +123,7 @@ include_directories(
   include/${PROJECT_NAME}/graphs
   include/${PROJECT_NAME}/planners
   ${catkin_INCLUDE_DIRS}
+  ${robosar_controller_INCLUDE_DIRS}
 )
 
 ## Declare a C++ library
@@ -164,6 +166,7 @@ add_executable(robosar_mission_execute src/robosar_mission_execute.cpp)
  ${catkin_LIBRARIES}
  ${PROJECT_NAME}
  ${Boost_LIBRARIES}
+ ${orocos_kdl_LIBRARIES}
 )
 
 
