@@ -22,11 +22,13 @@ public:
         ROS_INFO("Starting a new RoboSAR Nav Mission! Get ready for a show!");
 
         status_subscriber_ = nh_.subscribe("/robosar_agent_bringup/status", 1, &MissionExecutive::statusCallback, this);
-        task_allocation_subscriber = nh_.subscribe("task_allocation", 1, &MissionExecutive::taskAllocationCallback,this);
+        task_allocation_subscriber = nh_.subscribe("/task_allocation", 1, &MissionExecutive::taskAllocationCallback,this);
         // Get latest fleet info from agent bringup
-        status_client = nh_.serviceClient<robosar_messages::agent_status>("fleet_status");
+        status_client = nh_.serviceClient<robosar_messages::agent_status>("/robosar_agent_bringup_node/agent_status");
 
         fleet_info = getFleetStatusInfo();
+
+        ROS_INFO("[MISSION EXEC] Fleet of %ld agents online",fleet_info.size());
 
         // Create controllers for these agents
         createControllerActionServers(fleet_info);
@@ -54,6 +56,7 @@ private:
         while (ros::ok()) {
             if(areControllersIdle() && !agents.empty())
             {
+                ROS_INFO("Processing Tasks");
                 // Process tasks from task allocator
                 gridmap.clearTrajCache();
                 MultiAStar multi_astar(&gridmap,currPos,targetPos,agents);
@@ -67,7 +70,7 @@ private:
                     if(multi_astar.trajectory_map.find(agent)!=multi_astar.trajectory_map.end())  {
 
                         actionlib::SimpleActionClient<robosar_controller::RobosarControllerAction> ac(agent, true);
-                        ROS_INFO("Waiting for action server to start.");
+                        ROS_INFO("Waiting for action server to start for agent %s",&agent[0]);
                         // wait for the action server to start
                         ac.waitForServer(); //will wait for infinite time
 
@@ -129,11 +132,13 @@ private:
 
     bool createControllerActionServers(std::set<std::string> new_agents) {
         
+        ROS_INFO("Hello!");
         for(auto agent:new_agents){
             // Create new controller server
-            LGControllerAction *controller = new LGControllerAction(agent);
+            //ROS_INFO("Created controller server for %s",&agent[0]);
+            //LGControllerAction *controller = new LGControllerAction(agent);
             // save it in the map
-            controller_map[agent] = controller;
+            //controller_map[agent] = controller;
         }
         return true;
     }
@@ -143,13 +148,24 @@ private:
     }
 
     void taskAllocationCallback(robosar_messages::task_allocation ta_msg){
-    
+        
+        static int idx = 0;
         for(int i=0;i<ta_msg.id.size();i++){
-            double goal[] = {ta_msg.goalx[i],ta_msg.goaly[i],0.0};
-            double start[] = {ta_msg.startx[i],ta_msg.starty[i],0.0};
+            ROS_INFO("Start x:%f,y:%f, Goal x:%f,y:%f",ta_msg.startx[i],ta_msg.starty[i],ta_msg.goalx[i],ta_msg.goaly[i]);
+            
+            goal[idx] = ta_msg.goalx[i]; 
+            goal[idx+1] = ta_msg.goaly[i]; 
+            goal[idx+2] = 0.0; 
+
+            start[idx] = ta_msg.startx[i]; 
+            start[idx+1] = ta_msg.starty[i]; 
+            start[idx+2] = 0.0; 
+            //double goal[] = {ta_msg.goalx[i],ta_msg.goaly[i],0.0};
+            //double start[] = {ta_msg.startx[i],ta_msg.starty[i],0.0};
             agents.push_back(ta_msg.id[i]);
-            currPos.push_back(start);
-            targetPos.push_back(goal);
+            currPos.push_back(&start[idx]);
+            targetPos.push_back(&goal[idx]);
+            idx=idx+3;
         }
     }
 
@@ -164,6 +180,8 @@ private:
     ros::Subscriber status_subscriber_,task_allocation_subscriber;
     ros::NodeHandle nh_;
     bool fleet_status_outdated;
+    double goal[1000];
+    double start[1000];
 };
 
 #endif

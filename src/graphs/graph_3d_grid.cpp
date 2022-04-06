@@ -12,7 +12,7 @@ Graph3DGrid::Graph3DGrid(): allow_unknown(false) {
     scaleCostMap();
     //propogation_model = {{1,0}, {0,1}, {-1,0}, {0,-1},{0,0}};
     propogation_model = {{1,0}, {0,1}, {-1,0}, {0,-1}, {1,1},{-1,1},{1,-1},{-1,-1},{0,0}};
-    propogation_speed = 0.5; // m/s
+    propogation_speed = 0.2; // m/s
 }
 
 Graph3DGrid::~Graph3DGrid() {
@@ -139,7 +139,7 @@ std::vector<Graph3DGrid::Node> Graph3DGrid::getNeighbours(Node n) {
         if(nx >=0 && nx <size_width && ny>=0 && ny<size_height)
         {   
             // Time multiplied by 2 to account for execution errors
-            Node neighbour(nx,ny,n.t + 2*(resolution/propogation_speed)); 
+            Node neighbour(nx,ny,n.t + (resolution/propogation_speed)); 
             // Check if collision free
             if(!collisionCheck(neighbour)) {
                 neighbours.push_back(neighbour);
