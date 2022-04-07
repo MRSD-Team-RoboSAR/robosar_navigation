@@ -24,10 +24,10 @@ public:
         status_subscriber_ = nh_.subscribe("/robosar_agent_bringup/status", 1, &MissionExecutive::statusCallback, this);
         task_allocation_subscriber = nh_.subscribe("task_allocation", 1, &MissionExecutive::taskAllocationCallback,this);
         // Get latest fleet info from agent bringup
-        status_client = nh_.serviceClient<robosar_messages::agent_status>("fleet_status");
+        status_client = nh_.serviceClient<robosar_messages::agent_status>("/robosar_agent_bringup_node/agent_status");
 
         fleet_info = getFleetStatusInfo();
-
+        ROS_INFO(" [MISSION_EXEC] Active fleet size %ld",fleet_info.size());
         // Create controllers for these agents
         createControllerActionServers(fleet_info);
         
@@ -42,6 +42,13 @@ public:
         // destroy controller servers
         for(std::map<std::string,LGControllerAction*>::iterator it=controller_map.begin();it!= controller_map.end();it++ )
             delete it->second;
+
+        // free the heap
+        for(auto startHeap : start_vec)
+            delete [] startHeap;
+
+        for(auto goalHeap : goal_vec)
+            delete [] goalHeap; 
     }
 
 
@@ -54,6 +61,7 @@ private:
         while (ros::ok()) {
             if(areControllersIdle() && !agents.empty())
             {
+                ROS_INFO("Processing Tasks");
                 // Process tasks from task allocator
                 gridmap.clearTrajCache();
                 MultiAStar multi_astar(&gridmap,currPos,targetPos,agents);
@@ -69,7 +77,7 @@ private:
                         actionlib::SimpleActionClient<robosar_controller::RobosarControllerAction> ac(agent, true);
                         ROS_INFO("Waiting for action server to start.");
                         // wait for the action server to start
-                        ac.waitForServer(); //will wait for infinite time
+                        //ac.waitForServer(); //will wait for infinite time
 
                         ROS_INFO("Action server started, sending goal.");
                         robosar_controller::RobosarControllerGoal goal;
@@ -99,8 +107,8 @@ private:
 
     bool areControllersIdle() {
         std::map<std::string,LGControllerAction*>::iterator it;
-        for (it = controller_map.begin(); it != controller_map.end(); it++)
-        {
+        for (it = controller_map.begin(); it != controller_map.end(); it++){
+            
             if(it->second->as_.isActive())
                 return false;
         }
@@ -142,14 +150,28 @@ private:
         fleet_status_outdated = true;
     }
 
-    void taskAllocationCallback(robosar_messages::task_allocation ta_msg){
+    void taskAllocationCallback(robosar_messages::task_allocation ta_msg) {
     
         for(int i=0;i<ta_msg.id.size();i++){
-            double goal[] = {ta_msg.goalx[i],ta_msg.goaly[i],0.0};
-            double start[] = {ta_msg.startx[i],ta_msg.starty[i],0.0};
+            ROS_INFO("Start x:%f,y:%f, Goal x:%f,y:%f",ta_msg.startx[i],ta_msg.starty[i],ta_msg.goalx[i],ta_msg.goaly[i]);
+
+            double* goalHeap = new double[3];
+            goalHeap[0] = ta_msg.goalx[i]; 
+            goalHeap[1] = ta_msg.goaly[i]; 
+            goalHeap[2] = 0.0; 
+
+            double* startHeap = new double[3];
+            startHeap[0] = ta_msg.startx[i]; 
+            startHeap[1] = ta_msg.starty[i]; 
+            startHeap[2] = 0.0; 
+        
             agents.push_back(ta_msg.id[i]);
-            currPos.push_back(start);
-            targetPos.push_back(goal);
+            currPos.push_back(startHeap);
+            targetPos.push_back(goalHeap);
+            
+            // Save them on the heap so that you can free them later
+            goal_vec.push_back(goalHeap);
+            start_vec.push_back(startHeap);
         }
     }
 
@@ -164,6 +186,10 @@ private:
     ros::Subscriber status_subscriber_,task_allocation_subscriber;
     ros::NodeHandle nh_;
     bool fleet_status_outdated;
+
+    // Since we are sending a pointer we need to keep these from going out of scope until search is complete
+    std::vector<double*> goal_vec;
+    std::vector<double*> start_vec;
 };
 
 #endif
