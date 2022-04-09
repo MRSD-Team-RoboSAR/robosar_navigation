@@ -5,4 +5,5 @@
 		<!-- <node name="map_server" pkg="map_server" type="map_server" args="$(find robosar_navigation)/maps/blank_map.yaml"/>  -->
 
 	<node name="rviz" pkg="rviz" type="rviz" args="-d $(find robosar_navigation)/config/rviz/robot.rviz" />
+	
 </launch> 
