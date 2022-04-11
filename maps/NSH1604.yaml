@@ -1,0 +1,7 @@
+image: NSH1604.pgm
+resolution: 0.050000
+origin: [-2.797223, -2.997250, 0.000000]
+negate: 0
+occupied_thresh: 0.65
+free_thresh: 0.196
+
