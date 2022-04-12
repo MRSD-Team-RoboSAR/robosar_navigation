@@ -21,6 +21,17 @@ public:
         this->tar_Pos = targetPos;
         agentsNames = agents;
         traj_pub_ = nh_.advertise<visualization_msgs::MarkerArray>("multi_astar_vis", 1);
+
+        // Add current agent positions to the trajectory cache in the graph
+        for(int i=0;i<agents.size();i++) {
+            
+            double* agentPos = currPos[i];
+
+            // Create stationary trajectory
+            std::map<double,std::pair<double,double>> traj_map;
+            traj_map[-1.0] = std::make_pair(agentPos[0],agentPos[1]);
+            graph->addTrajCache(agents[i], traj_map);
+        }
     }
 
     ~MultiAStar(){

@@ -22,7 +22,7 @@ class AStar {
 
 public:
     AStar(std::string ns_, Graph* graph,double* g, double* s, ros::NodeHandle *nh) : planner_initialised(false),pg(graph), heuristic_weight(10.0f),
-                                                    goalNode(-1,-1,0.0), startNode(-1,-1, 0.0) {
+                                                  astar_ns_(ns_), goalNode(-1,-1,0.0), startNode(-1,-1, 0.0) {
 
         goal = g;
         start = s;
@@ -31,12 +31,12 @@ public:
         startNode = graph->getNode(start);
 
         // Check if goal and start are collision free
-        if(graph->collisionCheck(goalNode))
+        if(graph->collisionCheck(astar_ns_,goalNode))
         {
             ROS_WARN("[AStar] Goal in collision! %f,%f\n", goal[0], goal[1]);
             return;
         }
-        else if(graph->collisionCheck(startNode))
+        else if(graph->collisionCheck(astar_ns_,startNode))
         {
            ROS_WARN("[AStar] Start in collision! %f,%f\n", start[0], start[1]); 
            return;
@@ -92,7 +92,7 @@ public:
                 break;
             }
 
-            std::vector<Graph::Node> neighbours = pg->getNeighbours(qn.second);
+            std::vector<Graph::Node> neighbours = pg->getNeighbours(astar_ns_,qn.second);
             ROS_DEBUG("%d %d",qn.second.x,qn.second.y);
             // Graph has already done collision checking and stuff
             for(auto neighbour:neighbours) {
@@ -153,7 +153,7 @@ public:
             } while (!(pg->getDistanceBwNodes(parentNode,startNode)==0));
 
             publishPlan();
-            pg->addTrajCache(traj_map);
+            pg->addTrajCache(astar_ns_,traj_map);
         }
         else
             ROS_WARN("Path not found!!");
@@ -312,6 +312,7 @@ private:
     bool planner_initialised;
     int nx, ny, ns;		/**< size of grid, in pixels */
     float heuristic_weight;
+    std::string astar_ns_;
     std::priority_queue<std::pair<float, Graph::Node>,
                       std::vector<std::pair<float, Graph::Node>>,
                       CompareClass> queue;
