@@ -13,6 +13,8 @@
 #include "robosar_messages/task_allocation.h"
 #include "actionlib_msgs/GoalStatus.h"
 #include <actionlib/client/simple_action_client.h>
+#include <thread>
+
 
 class MissionExecutive {
 
@@ -22,7 +24,7 @@ public:
         ROS_INFO("Starting a new RoboSAR Nav Mission! Get ready for a show!");
 
         status_subscriber_ = nh_.subscribe("/robosar_agent_bringup/status", 1, &MissionExecutive::statusCallback, this);
-        task_allocation_subscriber = nh_.subscribe("task_allocation", 1, &MissionExecutive::taskAllocationCallback,this);
+        task_allocation_subscriber = nh_.subscribe("task_allocation", 10, &MissionExecutive::taskAllocationCallback,this);
         // Get latest fleet info from agent bringup
         status_client = nh_.serviceClient<robosar_messages::agent_status>("/robosar_agent_bringup_node/agent_status");
 
@@ -34,7 +36,7 @@ public:
         fleet_status_outdated = false;
         
         // Running our executive
-        run_mission();
+        mission_thread_ = std::thread(&MissionExecutive::run_mission, this);
     }
 
     ~MissionExecutive() {
@@ -49,6 +51,8 @@ public:
 
         for(auto goalHeap : goal_vec)
             delete [] goalHeap; 
+        
+        mission_thread_.join();
     }
 
 
@@ -59,9 +63,10 @@ private:
         ros::Rate loop_rate(10);
 
         while (ros::ok()) {
+            
             if(areControllersIdle() && !agents.empty())
             {
-                ROS_INFO("Processing Tasks");
+                ROS_INFO("Processing Tasks %ld",agents.size());
                 // Process tasks from task allocator
                 gridmap.clearTrajCache();
                 MultiAStar multi_astar(&gridmap,currPos,targetPos,agents);
@@ -98,8 +103,7 @@ private:
                 targetPos.clear();
 
             }
-            ros::spinOnce();
-
+            
             loop_rate.sleep();
         }
 
@@ -186,6 +190,7 @@ private:
     ros::Subscriber status_subscriber_,task_allocation_subscriber;
     ros::NodeHandle nh_;
     bool fleet_status_outdated;
+    std::thread mission_thread_;
 
     // Since we are sending a pointer we need to keep these from going out of scope until search is complete
     std::vector<double*> goal_vec;

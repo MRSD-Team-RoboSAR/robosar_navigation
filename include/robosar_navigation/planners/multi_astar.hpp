@@ -35,7 +35,7 @@ public:
             double* goal = tar_Pos[index];
             AStar planner(agentsNames[index],pg,goal,start,&nh_);
             ros::Duration(1.0).sleep();
-            bool planning_success = planner.run_planner(pg->getNumNodes());
+            bool planning_success = planner.run_planner(10*pg->getNumNodes());
 
             std::vector<geometry_msgs::PoseStamped> traj;
             if(planning_success) {
@@ -44,15 +44,15 @@ public:
                 // Create the trajectory
                 for(auto poses:planner.trajectory) {
 
-                        geometry_msgs::PoseStamped pose;
-                        pose.header.seq=0;
-                        pose.header.stamp = ros::Time::now();
-                        pose.header.frame_id = "map";
-                        pose.pose.position.x = poses[0];
-                        pose.pose.position.y = poses[1];
-                        pose.pose.position.z = poses[2];
-                        pose.pose.orientation.w = 1.0;
-                        traj.push_back(pose);
+                    geometry_msgs::PoseStamped pose;
+                    pose.header.seq=0;
+                    pose.header.stamp = ros::Time::now();
+                    pose.header.frame_id = "map";
+                    pose.pose.position.x = poses[0];
+                    pose.pose.position.y = poses[1];
+                    pose.pose.position.z = poses[2];
+                    pose.pose.orientation.w = 1.0;
+                    traj.push_back(pose);
                 }
                 trajectory_map[agentsNames[index]] = traj;
             }
