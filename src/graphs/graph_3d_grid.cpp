@@ -68,6 +68,15 @@ bool Graph3DGrid::collisionCheck(Node n) {
             if(hypot(closest_point.first-nodeMapFrame[0],closest_point.second-nodeMapFrame[1])<COLLISION_THRESHOLD)
                 return true;
         }
+        // Check with last point of the traj
+        // because robots donot magically disappear
+        else if(traj_map.size()>0)
+        {
+            std::pair<double,double> closest_point = traj_map.rbegin()->second;
+            //ROS_INFO("Collision checking with %f %f",closest_point.first,closest_point.second);
+            if(hypot(closest_point.first-nodeMapFrame[0],closest_point.second-nodeMapFrame[1])<COLLISION_THRESHOLD)
+                return true;
+        }
     }
 
     return false;
@@ -144,6 +153,11 @@ std::vector<Graph3DGrid::Node> Graph3DGrid::getNeighbours(Node n) {
         {   
             // Time multiplied by 2 to account for execution errors
             Node neighbour(nx,ny,n.t + (resolution/propogation_speed)); 
+
+            // propogate isStart
+            if(n.isStart && nx == n.x && ny == n.y)
+                neighbour.isStart = true;
+
             // Check if collision free
             if(!collisionCheck(neighbour)) {
                 neighbours.push_back(neighbour);

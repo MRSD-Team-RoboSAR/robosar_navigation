@@ -6,6 +6,6 @@
 
 	 <node name="robosar_mission_execute" pkg="robosar_navigation" type="robosar_mission_execute" output="screen"/> 
 
-	<node name="rviz" pkg="rviz" type="rviz" args="-d $(find robosar_navigation)/config/rviz/robot.rviz" />
+	<!-- <node name="rviz" pkg="rviz" type="rviz" args="-d $(find robosar_navigation)/config/rviz/robot.rviz" /> -->
 	
 </launch> 
