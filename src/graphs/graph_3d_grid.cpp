@@ -53,6 +53,10 @@ bool Graph3DGrid::collisionCheck(Node n) {
     // TODO
     if(costmap_[toNodeID(n)]>=COST_OBS_ROS)
         return true;
+
+    // if the robot exists it exists
+    if(n.isStart)
+        return false;
     
     std::vector<double> nodeMapFrame = toNodeInfo(n);
     for(auto traj_map:traj_cache) {

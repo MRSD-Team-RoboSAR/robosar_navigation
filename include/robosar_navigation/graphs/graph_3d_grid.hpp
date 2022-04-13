@@ -18,7 +18,7 @@
 #define COST_NEUTRAL 5		// Set this to "open space" value
 #define COST_FACTOR 0.8		// Used for translating costs in NavFn::setCostmap()
 
-#define COLLISION_THRESHOLD 0.14 // Twice the radius of khepera robot
+#define COLLISION_THRESHOLD 0.4 // Twice the radius of khepera robot
 
 class Graph3DGrid : Costmap2D {
 
@@ -28,7 +28,7 @@ public:
 
     class Node {
         public:
-            Node(int x, int y, double t) : x(x),y(y),t(t) {}
+            Node(int x, int y, double t) : x(x),y(y),t(t), isStart(false) {}
             Node(void)  {
                 // Uninitialised
                 x = -1;
@@ -56,6 +56,7 @@ public:
             int x; 
             int y;
             double t;
+            bool isStart;
     };
 
     bool collisionCheck(Node n);

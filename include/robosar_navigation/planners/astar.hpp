@@ -28,7 +28,9 @@ public:
         start = s;
 
         goalNode = graph->getNode(goal);
+        //goalNode.isStart = true;
         startNode = graph->getNode(start);
+        startNode.isStart = true;
 
         // Check if goal and start are collision free
         if(graph->collisionCheck(goalNode))
@@ -150,7 +152,7 @@ public:
                 trajectory.insert(trajectory.begin(),point);
                 traj_map[point[2]] = std::make_pair(point[0],point[1]);
                 ROS_INFO("%ld : %f %f %f",trajectory.size(),point[0],point[1],point[2]);
-            } while (!(pg->getDistanceBwNodes(parentNode,startNode)==0));
+            } while (parentNode.t>0.001);
 
             publishPlan();
             pg->addTrajCache(traj_map);
