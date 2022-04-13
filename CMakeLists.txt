@@ -11,11 +11,14 @@ find_package(catkin REQUIRED COMPONENTS
   roscpp
   rospy
   std_msgs
+  tf
+  robosar_messages
+  robosar_controller
 )
 
 ## System dependencies are found with CMake's conventions
-# find_package(Boost REQUIRED COMPONENTS system)
-
+find_package(Boost REQUIRED COMPONENTS system)
+find_package(orocos_kdl REQUIRED)
 
 ## Uncomment this if the package has a setup.py. This macro ensures
 ## modules and global scripts declared therein get installed
@@ -116,14 +119,19 @@ catkin_package(
 ## Specify additional locations of header files
 ## Your package locations should be listed before other locations
 include_directories(
-# include
+  include/${PROJECT_NAME}
+  include/${PROJECT_NAME}/graphs
+  include/${PROJECT_NAME}/planners
   ${catkin_INCLUDE_DIRS}
+  ${robosar_controller_INCLUDE_DIRS}
 )
 
 ## Declare a C++ library
-# add_library(${PROJECT_NAME}
-#   src/${PROJECT_NAME}/robosar_navigation.cpp
-# )
+add_library(${PROJECT_NAME}
+   src/costmap_2d.cpp
+   src/graphs/graph_2d_grid.cpp
+   src/graphs/graph_3d_grid.cpp
+ )
 
 ## Add cmake target dependencies of the library
 ## as an example, code may need to be generated before libraries
@@ -133,7 +141,9 @@ include_directories(
 ## Declare a C++ executable
 ## With catkin_make all packages are built within a single CMake context
 ## The recommended prefix ensures that target names across packages don't collide
-# add_executable(${PROJECT_NAME}_node src/robosar_navigation_node.cpp)
+add_executable(${PROJECT_NAME}_node src/robosar_nav_test.cpp)
+
+add_executable(robosar_mission_execute src/robosar_mission_execute.cpp)
 
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
@@ -146,9 +156,19 @@ include_directories(
 # add_dependencies(${PROJECT_NAME}_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 ## Specify libraries to link a library or executable target against
-# target_link_libraries(${PROJECT_NAME}_node
-#   ${catkin_LIBRARIES}
-# )
+ target_link_libraries(${PROJECT_NAME}_node
+   ${catkin_LIBRARIES}
+   ${PROJECT_NAME}
+   ${Boost_LIBRARIES}
+ )
+
+ target_link_libraries(robosar_mission_execute
+ ${catkin_LIBRARIES}
+ ${PROJECT_NAME}
+ ${Boost_LIBRARIES}
+ ${orocos_kdl_LIBRARIES}
+)
+
 
 #############
 ## Install ##
