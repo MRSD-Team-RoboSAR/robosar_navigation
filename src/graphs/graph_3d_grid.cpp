@@ -48,34 +48,21 @@ void Graph3DGrid::scaleCostMap()
 
 
 
-bool Graph3DGrid::collisionCheck(std::string whoami, Node n) {
+bool Graph3DGrid::collisionCheck(Node n) {
 
     // TODO
     if(costmap_[toNodeID(n)]>=COST_OBS_ROS)
         return true;
     
     std::vector<double> nodeMapFrame = toNodeInfo(n);
-    for(std::map<std::string,std::map<double,std::pair<double,double>>>::iterator it =traj_cache.begin();it!=traj_cache.end();it++) {
+    for(auto traj_map:traj_cache) {
 
-        // dont collision check yourself
-        if(it->first == whoami)
-            continue;
-
-        std::map<double,std::pair<double,double>> traj_map = it->second;
         // Lookup each trajectory using time lookup
         if(traj_map.find(n.t)!=traj_map.end())
         {
             std::pair<double,double> closest_point = traj_map[n.t];
             if(hypot(closest_point.first-nodeMapFrame[0],closest_point.second-nodeMapFrame[1])<COLLISION_THRESHOLD)
                 return true;
-        }
-        // stationary trajectory
-        else if(traj_map.size()==1 && traj_map.find(-1.0)!=traj_map.end())
-        {
-            std::pair<double,double> closest_point = traj_map[-1.0];
-            if(hypot(closest_point.first-nodeMapFrame[0],closest_point.second-nodeMapFrame[1])<COLLISION_THRESHOLD)
-                return true;
-
         }
     }
 
@@ -137,7 +124,7 @@ int Graph3DGrid::getDistanceBwNodes(Node node1, Node node2) {
     //return hypot(point2[0]-point1[0],point2[1]-point1[1]);
 }
 
-std::vector<Graph3DGrid::Node> Graph3DGrid::getNeighbours(std::string whoami, Node n) {
+std::vector<Graph3DGrid::Node> Graph3DGrid::getNeighbours(Node n) {
     // TODO
     std::vector<Node> neighbours;
 
@@ -154,7 +141,7 @@ std::vector<Graph3DGrid::Node> Graph3DGrid::getNeighbours(std::string whoami, No
             // Time multiplied by 2 to account for execution errors
             Node neighbour(nx,ny,n.t + (resolution/propogation_speed)); 
             // Check if collision free
-            if(!collisionCheck(whoami,neighbour)) {
+            if(!collisionCheck(neighbour)) {
                 neighbours.push_back(neighbour);
             }
         }
@@ -172,9 +159,9 @@ std::string Graph3DGrid::getFrame(void) {
     return map_frame_;
 }
 
-void Graph3DGrid::addTrajCache(std::string traj_key,std::map<double,std::pair<double,double>> trajectory) {
+void Graph3DGrid::addTrajCache(std::map<double,std::pair<double,double>> trajectory) {
 
-    traj_cache[traj_key] = trajectory;
+    traj_cache.push_back(trajectory);
 }
 
 void Graph3DGrid::clearTrajCache(void) {

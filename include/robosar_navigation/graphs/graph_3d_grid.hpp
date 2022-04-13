@@ -58,16 +58,16 @@ public:
             double t;
     };
 
-    bool collisionCheck(std::string whoami,Node n);
+    bool collisionCheck(Node n);
     int toNodeID(Node n);
     std::vector<double> toNodeInfo(Node n);
     int getNumNodes();
     Node getNode(double point[2]); 
     int getDistanceBwNodes(Node node1, Node node2);
-    std::vector<Node> getNeighbours(std::string whoami,Node node);
+    std::vector<Node> getNeighbours(Node node);
     int lookUpCost(Node node);
     std::string getFrame(void);
-    void addTrajCache(std::string traj_key,std::map<double,std::pair<double,double>> trajectory);
+    void addTrajCache(std::map<double,std::pair<double,double>> trajectory);
     void clearTrajCache(void);
 
 private:
@@ -76,7 +76,7 @@ private:
     std::vector<std::vector<int>> propogation_model;
     double propogation_speed;
     // Cached trajectories for collision checking
-    std::map<std::string,std::map<double,std::pair<double,double>>> traj_cache;
+    std::vector<std::map<double,std::pair<double,double>>> traj_cache;
 
 };
 

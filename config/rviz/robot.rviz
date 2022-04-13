@@ -88,13 +88,9 @@ Visualization Manager:
       Frame Timeout: 15
       Frames:
         All Enabled: false
-        agent1/base_link:
+        agent3/base_link:
           Value: true
-        agent1/odom:
-          Value: true
-        agent2/base_link:
-          Value: true
-        agent2/odom:
+        agent3/odom:
           Value: true
         map:
           Value: true
@@ -106,11 +102,8 @@ Visualization Manager:
       Show Names: false
       Tree:
         map:
-          agent1/odom:
-            agent1/base_link:
-              {}
-          agent2/odom:
-            agent2/base_link:
+          agent3/odom:
+            agent3/base_link:
               {}
       Update Interval: 0
       Value: true
@@ -395,7 +388,7 @@ Visualization Manager:
       Value: true
     - Class: rviz/MarkerArray
       Enabled: true
-      Marker Topic: /robosar_mission_execute/multi_astar_vis
+      Marker Topic: /robosar_nav_test_node/multi_astar_vis
       Name: MarkerArray
       Namespaces:
         {}
@@ -533,10 +526,10 @@ Visualization Manager:
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Scale: 148.2325897216797
+      Scale: 113.16656494140625
       Target Frame: <Fixed Frame>
-      X: 2.154512882232666
-      Y: 1.970954179763794
+      X: 1.5170669555664062
+      Y: 2.581711530685425
     Saved:
       - Angle: -7.870025157928467
         Class: rviz/TopDownOrtho
