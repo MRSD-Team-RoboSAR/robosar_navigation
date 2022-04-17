@@ -64,6 +64,7 @@ bool Graph3DGrid::collisionCheck(Node n) {
         // Lookup each trajectory using time lookup
         if(traj_map.find(n.t)!=traj_map.end())
         {
+            isDynamicCollision = true;
             std::pair<double,double> closest_point = traj_map[n.t];
             if(hypot(closest_point.first-nodeMapFrame[0],closest_point.second-nodeMapFrame[1])<COLLISION_THRESHOLD)
                 return true;
@@ -140,13 +141,16 @@ int Graph3DGrid::getDistanceBwNodes(Node node1, Node node2) {
 std::vector<Graph3DGrid::Node> Graph3DGrid::getNeighbours(Node n) {
     // TODO
     std::vector<Node> neighbours;
-
+    isDynamicCollision = false;
     //int my = node_id/size_width;
     //int mx = node_id%size_width;
     for(int i=0;i<propogation_model.size();i++)
     {
         int nx = n.x + propogation_model[i][0];
         int ny = n.y + propogation_model[i][1];
+
+        if(!isDynamicCollision && nx == n.x && ny == n.y)
+            continue;
 
         // Check if within boundary
         if(nx >=0 && nx <size_width && ny>=0 && ny<size_height)
@@ -180,6 +184,7 @@ std::string Graph3DGrid::getFrame(void) {
 void Graph3DGrid::addTrajCache(std::map<double,std::pair<double,double>> trajectory) {
 
     traj_cache.push_back(trajectory);
+    ROS_INFO("Traj cache %ld",traj_cache.size());
 }
 
 void Graph3DGrid::clearTrajCache(void) {

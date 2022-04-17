@@ -34,6 +34,7 @@ public:
                 x = -1;
                 y = -1;
                 t = 0.0;
+                isStart = false;
             }
 
             bool operator==(const Node &n) const
@@ -74,6 +75,7 @@ public:
 private:
     void scaleCostMap();
     bool allow_unknown;
+    bool isDynamicCollision;
     std::vector<std::vector<int>> propogation_model;
     double propogation_speed;
     // Cached trajectories for collision checking
