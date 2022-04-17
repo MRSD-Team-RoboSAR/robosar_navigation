@@ -35,7 +35,7 @@ public:
             double* goal = tar_Pos[index];
             AStar planner(agentsNames[index],pg,goal,start,&nh_);
             ros::Duration(1.0).sleep();
-            bool planning_success = planner.run_planner(pg->getNumNodes()*pg->getNumNodes());
+            bool planning_success = planner.run_planner(10*pg->getNumNodes());
 
             std::vector<geometry_msgs::PoseStamped> traj;
             if(planning_success) {
