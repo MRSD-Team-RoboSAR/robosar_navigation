@@ -33,7 +33,7 @@ public:
             int index = agentId[i];
             double* start= curr_Pos[index];
             double* goal = tar_Pos[index];
-            AStar planner(agentsNames[index],pg,goal,start,&nh_);
+            AStar planner(agentsNames[index],pg,goal,tar_Pos,start,&nh_);
             ros::Duration(1.0).sleep();
             bool planning_success = planner.run_planner(10*pg->getNumNodes());
 

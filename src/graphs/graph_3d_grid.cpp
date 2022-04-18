@@ -2,7 +2,7 @@
 
 #include "graph_3d_grid.hpp"
 #include <ros/console.h>
-
+#include <vector>
 
 Graph3DGrid::Graph3DGrid(): allow_unknown(false) {
 
@@ -48,7 +48,7 @@ void Graph3DGrid::scaleCostMap()
 
 
 
-bool Graph3DGrid::collisionCheck(Node n) {
+bool Graph3DGrid::collisionCheck(Node n,double* goal,std::vector<double*> allGoalPositions) {
 
     // TODO
     if(costmap_[toNodeID(n)]>=COST_OBS_ROS)
@@ -59,6 +59,18 @@ bool Graph3DGrid::collisionCheck(Node n) {
         return false;
     
     std::vector<double> nodeMapFrame = toNodeInfo(n);
+    for(auto goal_check:allGoalPositions){
+        if(goal == goal_check)
+            continue;
+        else{
+            //Graph::Node goalCheckNode = graph->getNode(goal_check);
+            std::vector<double> goalCheckPoint = toNodeInfo(this->getNode(goal_check));
+            if(hypot(goalCheckPoint[0]-nodeMapFrame[0],goalCheckPoint[1]-nodeMapFrame[1])<COLLISION_THRESHOLD){
+                ROS_WARN("Goal of another agent is in collision! %f,%f\n", goalCheckPoint[0], goalCheckPoint[1]);
+                return true;
+            }
+        }
+    }
     for(auto traj_map:traj_cache) {
 
         // Lookup each trajectory using time lookup
@@ -138,7 +150,7 @@ int Graph3DGrid::getDistanceBwNodes(Node node1, Node node2) {
     //return hypot(point2[0]-point1[0],point2[1]-point1[1]);
 }
 
-std::vector<Graph3DGrid::Node> Graph3DGrid::getNeighbours(Node n) {
+std::vector<Graph3DGrid::Node> Graph3DGrid::getNeighbours(Node n,double* goal,std::vector<double*> allGoalPositions) {
     // TODO
     std::vector<Node> neighbours;
     isDynamicCollision = false;
@@ -163,7 +175,7 @@ std::vector<Graph3DGrid::Node> Graph3DGrid::getNeighbours(Node n) {
                 neighbour.isStart = true;
 
             // Check if collision free
-            if(!collisionCheck(neighbour)) {
+            if(!collisionCheck(neighbour,goal,allGoalPositions)) {
                 neighbours.push_back(neighbour);
             }
         }

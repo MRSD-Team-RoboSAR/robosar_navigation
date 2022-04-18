@@ -60,13 +60,13 @@ public:
             bool isStart;
     };
 
-    bool collisionCheck(Node n);
+    bool collisionCheck(Node n,double* goal,std::vector<double*> allGoalPositions);
     int toNodeID(Node n);
     std::vector<double> toNodeInfo(Node n);
     int getNumNodes();
     Node getNode(double point[2]); 
     int getDistanceBwNodes(Node node1, Node node2);
-    std::vector<Node> getNeighbours(Node node);
+    std::vector<Node> getNeighbours(Node node,double* goal,std::vector<double*> allGoalPositions);
     int lookUpCost(Node node);
     std::string getFrame(void);
     void addTrajCache(std::map<double,std::pair<double,double>> trajectory);

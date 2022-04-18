@@ -12,7 +12,7 @@
 #include <geometry_msgs/Point.h>
 #include <unordered_map>
 #include <unordered_set>
-
+#include <vector>
 // Underlying graph datatype can be changed here
 #undef Graph
 #define Graph Graph3DGrid
@@ -21,8 +21,8 @@
 class AStar {
 
 public:
-    AStar(std::string ns_, Graph* graph,double* g, double* s, ros::NodeHandle *nh) : planner_initialised(false),pg(graph), heuristic_weight(10.0f),
-                                                    goalNode(-1,-1,0.0), startNode(-1,-1, 0.0) {
+    AStar(std::string ns_, Graph* graph,double* g, std::vector<double*> targetPos, double* s, ros::NodeHandle *nh) : planner_initialised(false),pg(graph), heuristic_weight(10.0f),
+                                                    goalNode(-1,-1,0.0), startNode(-1,-1, 0.0),allGoalPositions(targetPos) {
 
         goal = g;
         start = s;
@@ -33,12 +33,12 @@ public:
         startNode.isStart = true;
 
         // Check if goal and start are collision free
-        if(graph->collisionCheck(goalNode))
+        if(graph->collisionCheck(goalNode,goal,allGoalPositions))
         {
             ROS_WARN("[AStar] Goal in collision! %f,%f\n", goal[0], goal[1]);
             return;
         }
-        else if(graph->collisionCheck(startNode))
+        else if(graph->collisionCheck(startNode,goal,allGoalPositions))
         {
            ROS_WARN("[AStar] Start in collision! %f,%f\n", start[0], start[1]); 
            return;
@@ -94,7 +94,7 @@ public:
                 break;
             }
 
-            std::vector<Graph::Node> neighbours = pg->getNeighbours(qn.second);
+            std::vector<Graph::Node> neighbours = pg->getNeighbours(qn.second,goal,allGoalPositions);
             ROS_DEBUG("%d %d",qn.second.x,qn.second.y);
             // Graph has already done collision checking and stuff
             for(auto neighbour:neighbours) {
@@ -310,6 +310,7 @@ private:
     Graph::Node goalNode;
     Graph::Node startNode;
     double* goal;
+    std::vector<double*> allGoalPositions;
     double* start;
     bool planner_initialised;
     int nx, ny, ns;		/**< size of grid, in pixels */
