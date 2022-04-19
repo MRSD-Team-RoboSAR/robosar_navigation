@@ -161,6 +161,7 @@ std::vector<Graph3DGrid::Node> Graph3DGrid::getNeighbours(Node n, std::string wh
         int nx = n.x + propogation_model[i][0];
         int ny = n.y + propogation_model[i][1];
 
+        // Dont add wait state if no dynamic collision
         if(!isDynamicCollision && nx == n.x && ny == n.y)
             continue;
 
@@ -196,7 +197,6 @@ std::string Graph3DGrid::getFrame(void) {
 void Graph3DGrid::addTrajCache(std::map<double,std::pair<double,double>> trajectory) {
 
     traj_cache.push_back(trajectory);
-    ROS_INFO("Traj cache %ld",traj_cache.size());
 }
 
 void Graph3DGrid::clearTrajCache(void) {
