@@ -14,6 +14,7 @@
 #include "actionlib_msgs/GoalStatus.h"
 #include <actionlib/client/simple_action_client.h>
 #include <thread>
+#include <algorithm>
 
 
 class MissionExecutive {
@@ -103,10 +104,43 @@ private:
                 targetPos.clear();
 
             }
+            else if(fleet_status_outdated) {
+
+                processNewAgentStatus(getFleetStatusInfo());
+                fleet_status_outdated = false;
+            }
             
             loop_rate.sleep();
         }
 
+    }
+
+    void processNewAgentStatus(std::set<string> new_fleet_info) {
+
+        // Get newly added agents
+        std::set<string> additions;
+        std::set<string> subtractions;
+        std::set_difference(new_fleet_info.begin(), new_fleet_info.end(),
+                                fleet_info.begin(), fleet_info.end(), std::inserter(additions, additions.begin()));
+
+        std::set_difference(fleet_info.begin(), fleet_info.end(),
+                                new_fleet_info.begin(), new_fleet_info.end(), std::inserter(subtractions, subtractions.begin()));
+
+        if(!additions.empty()) {
+            createControllerActionServers(additions);
+        }
+
+        if(!subtractions.empty()) {
+            // Dont destroy the action server for now
+            // Just stop it from executing
+            for(std::set<string>::iterator it=subtractions.begin();it!=subtractions.end();it++) {
+                ROS_WARN("[MISSION_EXEC] Aborting controller action execution for %s",&(*it)[0]);
+                controller_map[*it]->as_.setAborted();
+            }
+        }
+
+        fleet_info = new_fleet_info;
+        
     }
 
     bool areControllersIdle() {
@@ -134,7 +168,7 @@ private:
         }
         else
         {
-            ROS_ERROR("Failed to call fleet info service");
+            ROS_ERROR("[MISSION_EXEC] Failed to call fleet info service");
             return fleet_info;
         }
     }
@@ -144,6 +178,7 @@ private:
         for(auto agent:new_agents){
             // Create new controller server
             LGControllerAction *controller = new LGControllerAction(agent);
+            ROS_INFO("[MISSION_EXEC] Created controller for %s",&agent[0]);
             // save it in the map
             controller_map[agent] = controller;
         }
