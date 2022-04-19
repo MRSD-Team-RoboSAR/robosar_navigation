@@ -24,7 +24,7 @@ public:
 
         ROS_INFO("Starting a new RoboSAR Nav Mission! Get ready for a show!");
 
-        status_subscriber_ = nh_.subscribe("/robosar_agent_bringup/status", 1, &MissionExecutive::statusCallback, this);
+        status_subscriber_ = nh_.subscribe("/robosar_agent_bringup_node/status", 1, &MissionExecutive::statusCallback, this);
         task_allocation_subscriber = nh_.subscribe("task_allocation", 10, &MissionExecutive::taskAllocationCallback,this);
         // Get latest fleet info from agent bringup
         status_client = nh_.serviceClient<robosar_messages::agent_status>("/robosar_agent_bringup_node/agent_status");
@@ -33,6 +33,8 @@ public:
         ROS_INFO(" [MISSION_EXEC] Active fleet size %ld",fleet_info.size());
         // Create controllers for these agents
         createControllerActionServers(fleet_info);
+        // Create clients for these controllers
+        createControllerActionClients(fleet_info);
         
         fleet_status_outdated = false;
         
@@ -44,6 +46,11 @@ public:
 
         // destroy controller servers
         for(std::map<std::string,LGControllerAction*>::iterator it=controller_map.begin();it!= controller_map.end();it++ )
+            delete it->second;
+
+        // destroy controller clients
+        for(std::map<std::string,actionlib::SimpleActionClient<robosar_controller::RobosarControllerAction>*>::iterator it=client_map.begin();
+                                                                            it!= client_map.end();it++ )
             delete it->second;
 
         // free the heap
@@ -67,7 +74,7 @@ private:
             
             if(areControllersIdle() && !agents.empty())
             {
-                ROS_INFO("Processing Tasks %ld",agents.size());
+                ROS_INFO("[MISSION_EXEC] Processing Tasks %ld",agents.size());
                 // Process tasks from task allocator
                 gridmap.clearTrajCache();
                 gridmap.addGoalCache(targetPos,agents);
@@ -81,12 +88,13 @@ private:
                     // Check if planning was successful
                     if(multi_astar.trajectory_map.find(agent)!=multi_astar.trajectory_map.end())  {
 
-                        actionlib::SimpleActionClient<robosar_controller::RobosarControllerAction> ac(agent, true);
-                        ROS_INFO("Waiting for action server to start.");
+                        actionlib::SimpleActionClient<robosar_controller::RobosarControllerAction> *ac 
+                                    = client_map[agent];
+                        ROS_INFO("[MISSION_EXEC] Waiting for action server to start.");
                         // wait for the action server to start
                         //ac.waitForServer(); //will wait for infinite time
 
-                        ROS_INFO("Action server started, sending goal.");
+                        ROS_INFO("[MISSION_EXEC] Action server started, sending goal.");
                         robosar_controller::RobosarControllerGoal goal;
                         
                         // Get the trajectory from the map
@@ -95,7 +103,7 @@ private:
                             goal.path.poses.push_back(pose);
   
                         // Send the goal
-                         ac.sendGoal(goal);
+                         ac->sendGoal(goal);
                     }
                 }
 
@@ -106,7 +114,7 @@ private:
 
             }
             else if(fleet_status_outdated) {
-
+                ROS_WARN("[MISSION_EXEC] New fleet info received!!");
                 processNewAgentStatus(getFleetStatusInfo());
                 fleet_status_outdated = false;
             }
@@ -129,18 +137,22 @@ private:
 
         if(!additions.empty()) {
             createControllerActionServers(additions);
+            createControllerActionClients(additions);
+
+            // Add them to our fleet info!
+            fleet_info.insert(additions.begin(),additions.end());
         }
 
         if(!subtractions.empty()) {
             // Dont destroy the action server for now
             // Just stop it from executing
             for(std::set<string>::iterator it=subtractions.begin();it!=subtractions.end();it++) {
-                ROS_WARN("[MISSION_EXEC] Aborting controller action execution for %s",&(*it)[0]);
-                controller_map[*it]->as_.setAborted();
+                if(controller_map[*it]->as_.isActive()) {
+                    ROS_WARN("[MISSION_EXEC] Preempting controller action execution for %s",&(*it)[0]);
+                    client_map[*it]->cancelGoal();
+                }
             }
         }
-
-        fleet_info = new_fleet_info;
         
     }
 
@@ -179,12 +191,27 @@ private:
         for(auto agent:new_agents){
             // Create new controller server
             LGControllerAction *controller = new LGControllerAction(agent);
-            ROS_INFO("[MISSION_EXEC] Created controller for %s",&agent[0]);
+            ROS_DEBUG("[MISSION_EXEC] Created controller for %s",&agent[0]);
             // save it in the map
             controller_map[agent] = controller;
         }
         return true;
     }
+
+     bool createControllerActionClients(std::set<std::string> new_agents) {
+        
+        for(auto agent:new_agents){
+            // Create new controller client
+            actionlib::SimpleActionClient<robosar_controller::RobosarControllerAction>* ac = 
+                                    new actionlib::SimpleActionClient<robosar_controller::RobosarControllerAction>(agent, true);
+            ROS_DEBUG("[MISSION_EXEC] Created controller client for %s",&agent[0]);
+            // save it in the map
+            client_map[agent] = ac;
+        }
+        return true;
+    }
+
+    
 
     void statusCallback(const std_msgs::Bool &status_msg) {
         fleet_status_outdated = true;
@@ -216,6 +243,7 @@ private:
     }
 
     std::map<std::string,LGControllerAction*> controller_map;
+    std::map<std::string,actionlib::SimpleActionClient<robosar_controller::RobosarControllerAction>*> client_map;
     std::set<std::string> fleet_info;
     ros::ServiceClient status_client; 
 
