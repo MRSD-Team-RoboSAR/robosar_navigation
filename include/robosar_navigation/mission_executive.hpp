@@ -4,6 +4,7 @@
 #define MISSION_EXECUTIVE_HPP
 
 #include "graph_3d_grid.hpp"
+#include "graph_motion_primitives.hpp"
 #include "multi_astar.hpp"
 #include <ros/console.h>
 #include <std_msgs/Bool.h>
@@ -186,7 +187,7 @@ private:
     std::vector<std::string> agents;
     std::vector<double*> currPos;
     std::vector<double*> targetPos;
-    Graph3DGrid gridmap;
+    GraphMotionPrimitives gridmap;
     ros::Subscriber status_subscriber_,task_allocation_subscriber;
     ros::NodeHandle nh_;
     bool fleet_status_outdated;

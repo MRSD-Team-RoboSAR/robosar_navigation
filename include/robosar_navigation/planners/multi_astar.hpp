@@ -58,7 +58,7 @@ public:
             }
         }
 
-        //visualise_paths(planner_vec);
+        visualise_paths(planner_vec);
         return false;
     }
 

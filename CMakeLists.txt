@@ -122,6 +122,7 @@ include_directories(
   include/${PROJECT_NAME}
   include/${PROJECT_NAME}/graphs
   include/${PROJECT_NAME}/planners
+  include/${PROJECT_NAME}/motion_primitives
   ${catkin_INCLUDE_DIRS}
   ${robosar_controller_INCLUDE_DIRS}
 )
@@ -131,6 +132,7 @@ add_library(${PROJECT_NAME}
    src/costmap_2d.cpp
    src/graphs/graph_2d_grid.cpp
    src/graphs/graph_3d_grid.cpp
+   src/graphs/graph_motion_primitives.cpp
  )
 
 ## Add cmake target dependencies of the library

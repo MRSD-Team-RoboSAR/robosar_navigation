@@ -5,6 +5,7 @@
 
 #include "graph_2d_grid.hpp"
 #include "graph_3d_grid.hpp"
+#include "graph_motion_primitives.hpp"
 #include <queue>
 #include <nav_msgs/Path.h>
 #include <visualization_msgs/MarkerArray.h>
@@ -15,14 +16,13 @@
 
 // Underlying graph datatype can be changed here
 #undef Graph
-#define Graph Graph3DGrid
+#define Graph GraphMotionPrimitives
 
 #define POT_HIGH 1.0e10		// unassigned cell potential
 class AStar {
 
 public:
-    AStar(std::string ns_, Graph* graph,double* g, double* s, ros::NodeHandle *nh) : planner_initialised(false),pg(graph), heuristic_weight(10.0f),
-                                                    goalNode(-1,-1,0.0), startNode(-1,-1, 0.0) {
+    AStar(std::string ns_, Graph* graph,double* g, double* s, ros::NodeHandle *nh) : planner_initialised(false),pg(graph), heuristic_weight(10.0f) {
 
         goal = g;
         start = s;
@@ -88,14 +88,14 @@ public:
             pending.insert(qn.second);
 
             // Check if reached goal
-            if(pg->getDistanceBwNodes(qn.second,goalNode)==0) {
+            if(pg->getDistanceBwNodes(qn.second,goalNode)<20) {
                 goalNode = qn.second;
                 path_found = true;
                 break;
             }
 
             std::vector<Graph::Node> neighbours = pg->getNeighbours(qn.second);
-            ROS_DEBUG("%d %d",qn.second.x,qn.second.y);
+            //ROS_DEBUG("%d %d",qn.second.x,qn.second.y);
             // Graph has already done collision checking and stuff
             for(auto neighbour:neighbours) {
                 
@@ -121,7 +121,7 @@ public:
                         float node_cost = new_pot + heuristic_weight*((float)(pg->getDistanceBwNodes(neighbour,goalNode)));
                         std::pair<float,Graph::Node> neighbour_node = std::make_pair(node_cost,neighbour);
                         queue.push(neighbour_node);
-                        //publishExpansion(NODE_FRONTIER,neighbour);
+                        publishExpansion(NODE_FRONTIER,neighbour);
                         cameFrom[neighbour] = qn.second;
                     }
                     else
@@ -132,17 +132,20 @@ public:
                 }
             }
 
+            //ros::Duration(5).sleep();
         }
 
         if(path_found)
         {   
+            ROS_WARN("Path found!!");
+            
             // Traj map object for graph collision checking
             std::map<double,std::pair<double,double>> traj_map;
 
             // Retrace path
             std::vector<double> point = pg->toNodeInfo(goalNode);
             trajectory.insert(trajectory.begin(),point);
-            traj_map[point[2]] = std::make_pair(point[0],point[1]);
+            traj_map[point[3]] = std::make_pair(point[0],point[1]);
             ROS_INFO("%ld : %f %f %f",trajectory.size(),point[0],point[1],point[2]);
             Graph::Node parentNode = goalNode;
             do
@@ -150,7 +153,7 @@ public:
                 parentNode = cameFrom[parentNode];
                 point = pg->toNodeInfo(parentNode);
                 trajectory.insert(trajectory.begin(),point);
-                traj_map[point[2]] = std::make_pair(point[0],point[1]);
+                traj_map[point[3]] = std::make_pair(point[0],point[1]);
                 ROS_INFO("%ld : %f %f %f",trajectory.size(),point[0],point[1],point[2]);
             } while (parentNode.t>0.001);
 
