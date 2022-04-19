@@ -34,6 +34,7 @@ public:
                 x = -1;
                 y = -1;
                 t = 0.0;
+                isStart = false;
             }
 
             bool operator==(const Node &n) const
@@ -59,13 +60,13 @@ public:
             bool isStart;
     };
 
-    bool collisionCheck(Node n);
+    bool collisionCheck(Node n,double* goal,std::vector<double*> allGoalPositions);
     int toNodeID(Node n);
     std::vector<double> toNodeInfo(Node n);
     int getNumNodes();
     Node getNode(double point[2]); 
     int getDistanceBwNodes(Node node1, Node node2);
-    std::vector<Node> getNeighbours(Node node);
+    std::vector<Node> getNeighbours(Node node,double* goal,std::vector<double*> allGoalPositions);
     int lookUpCost(Node node);
     std::string getFrame(void);
     void addTrajCache(std::map<double,std::pair<double,double>> trajectory);
@@ -74,6 +75,7 @@ public:
 private:
     void scaleCostMap();
     bool allow_unknown;
+    bool isDynamicCollision;
     std::vector<std::vector<int>> propogation_model;
     double propogation_speed;
     // Cached trajectories for collision checking
