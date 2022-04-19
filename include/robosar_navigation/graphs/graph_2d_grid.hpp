@@ -73,6 +73,7 @@ private:
     void scaleCostMap();
     bool allow_unknown;
     std::vector<std::vector<int>> propogation_model;
+    double propogation_speed;
 
 };
 

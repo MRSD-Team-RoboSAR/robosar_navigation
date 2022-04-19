@@ -12,6 +12,7 @@ Graph2DGrid::Graph2DGrid(): allow_unknown(false) {
     scaleCostMap();
     //propogation_model = {{1,0}, {0,1}, {-1,0}, {0,-1}};
     propogation_model = {{1,0}, {0,1}, {-1,0}, {0,-1}, {1,1},{-1,1},{1,-1},{-1,-1}};
+    propogation_speed = 0.2; // m/s
 }
 
 Graph2DGrid::~Graph2DGrid() {
@@ -128,7 +129,7 @@ std::vector<Graph2DGrid::Node> Graph2DGrid::getNeighbours(Node n, std::string wh
         // Check if within boundary
         if(nx >=0 && nx <size_width && ny>=0 && ny<size_height)
         {   
-            Node neighbour(nx,ny,n.t + 0.1); 
+            Node neighbour(nx,ny,n.t + (resolution/propogation_speed)); 
             // Check if collision free
             if(!collisionCheck(neighbour,whoami)) {
                 neighbours.push_back(neighbour);
