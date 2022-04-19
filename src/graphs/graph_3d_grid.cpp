@@ -48,7 +48,7 @@ void Graph3DGrid::scaleCostMap()
 
 
 
-bool Graph3DGrid::collisionCheck(Node n,double* goal,std::vector<double*> allGoalPositions) {
+bool Graph3DGrid::collisionCheck(Node n, std::string whoami) {
 
     // TODO
     if(costmap_[toNodeID(n)]>=COST_OBS_ROS)
@@ -59,12 +59,12 @@ bool Graph3DGrid::collisionCheck(Node n,double* goal,std::vector<double*> allGoa
         return false;
     
     std::vector<double> nodeMapFrame = toNodeInfo(n);
-    for(auto goal_check:allGoalPositions){
-        if(goal == goal_check)
+    for(std::map<std::string,double*>::iterator it = goal_cache.begin();it!=goal_cache.end() ;it++) {
+        if(it->first == whoami)
             continue;
         else{
             //Graph::Node goalCheckNode = graph->getNode(goal_check);
-            std::vector<double> goalCheckPoint = toNodeInfo(this->getNode(goal_check));
+            double* goalCheckPoint = it->second;
             if(hypot(goalCheckPoint[0]-nodeMapFrame[0],goalCheckPoint[1]-nodeMapFrame[1])<COLLISION_THRESHOLD){
                 ROS_WARN("Goal of another agent is in collision! %f,%f\n", goalCheckPoint[0], goalCheckPoint[1]);
                 return true;
@@ -150,7 +150,7 @@ int Graph3DGrid::getDistanceBwNodes(Node node1, Node node2) {
     //return hypot(point2[0]-point1[0],point2[1]-point1[1]);
 }
 
-std::vector<Graph3DGrid::Node> Graph3DGrid::getNeighbours(Node n,double* goal,std::vector<double*> allGoalPositions) {
+std::vector<Graph3DGrid::Node> Graph3DGrid::getNeighbours(Node n, std::string whoami) {
     // TODO
     std::vector<Node> neighbours;
     isDynamicCollision = false;
@@ -161,6 +161,7 @@ std::vector<Graph3DGrid::Node> Graph3DGrid::getNeighbours(Node n,double* goal,st
         int nx = n.x + propogation_model[i][0];
         int ny = n.y + propogation_model[i][1];
 
+        // Dont add wait state if no dynamic collision
         if(!isDynamicCollision && nx == n.x && ny == n.y)
             continue;
 
@@ -175,7 +176,7 @@ std::vector<Graph3DGrid::Node> Graph3DGrid::getNeighbours(Node n,double* goal,st
                 neighbour.isStart = true;
 
             // Check if collision free
-            if(!collisionCheck(neighbour,goal,allGoalPositions)) {
+            if(!collisionCheck(neighbour,whoami)) {
                 neighbours.push_back(neighbour);
             }
         }
@@ -196,10 +197,17 @@ std::string Graph3DGrid::getFrame(void) {
 void Graph3DGrid::addTrajCache(std::map<double,std::pair<double,double>> trajectory) {
 
     traj_cache.push_back(trajectory);
-    ROS_INFO("Traj cache %ld",traj_cache.size());
 }
 
 void Graph3DGrid::clearTrajCache(void) {
 
     traj_cache.clear();
+}
+
+void Graph3DGrid::addGoalCache(std::vector<double*> goal_positions, std::vector<std::string> planner_names) {
+
+    goal_cache.clear();
+    for(int i=0;i<goal_positions.size();i++) {
+        goal_cache[planner_names[i]] = goal_positions[i];
+    }
 }
