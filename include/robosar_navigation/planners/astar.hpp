@@ -21,24 +21,24 @@
 class AStar {
 
 public:
-    AStar(std::string ns_, Graph* graph,double* g, std::vector<double*> targetPos, double* s, ros::NodeHandle *nh) : planner_initialised(false),pg(graph), heuristic_weight(10.0f),
-                                                    goalNode(-1,-1,0.0), startNode(-1,-1, 0.0),allGoalPositions(targetPos) {
+    AStar(std::string ns_, Graph* graph,double* g, double* s, ros::NodeHandle *nh) : planner_initialised(false),pg(graph), heuristic_weight(10.0f),
+                                                    goalNode(-1,-1,0.0), startNode(-1,-1, 0.0), planner_name(ns_) {
 
         goal = g;
         start = s;
 
         goalNode = graph->getNode(goal);
-        //goalNode.isStart = true;
+
         startNode = graph->getNode(start);
         startNode.isStart = true;
 
         // Check if goal and start are collision free
-        if(graph->collisionCheck(goalNode,goal,allGoalPositions))
+        if(graph->collisionCheck(goalNode,planner_name))
         {
             ROS_WARN("[AStar] Goal in collision! %f,%f\n", goal[0], goal[1]);
             return;
         }
-        else if(graph->collisionCheck(startNode,goal,allGoalPositions))
+        else if(graph->collisionCheck(startNode,planner_name))
         {
            ROS_WARN("[AStar] Start in collision! %f,%f\n", start[0], start[1]); 
            return;
@@ -94,7 +94,7 @@ public:
                 break;
             }
 
-            std::vector<Graph::Node> neighbours = pg->getNeighbours(qn.second,goal,allGoalPositions);
+            std::vector<Graph::Node> neighbours = pg->getNeighbours(qn.second,planner_name);
             ROS_DEBUG("%d %d",qn.second.x,qn.second.y);
             // Graph has already done collision checking and stuff
             for(auto neighbour:neighbours) {
@@ -310,8 +310,8 @@ private:
     Graph::Node goalNode;
     Graph::Node startNode;
     double* goal;
-    std::vector<double*> allGoalPositions;
     double* start;
+    std::string planner_name;
     bool planner_initialised;
     int nx, ny, ns;		/**< size of grid, in pixels */
     float heuristic_weight;

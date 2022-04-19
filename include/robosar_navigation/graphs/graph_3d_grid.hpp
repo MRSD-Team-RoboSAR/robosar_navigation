@@ -60,16 +60,17 @@ public:
             bool isStart;
     };
 
-    bool collisionCheck(Node n,double* goal,std::vector<double*> allGoalPositions);
+    bool collisionCheck(Node n,std::string whoami);
     int toNodeID(Node n);
     std::vector<double> toNodeInfo(Node n);
     int getNumNodes();
     Node getNode(double point[2]); 
     int getDistanceBwNodes(Node node1, Node node2);
-    std::vector<Node> getNeighbours(Node node,double* goal,std::vector<double*> allGoalPositions);
+    std::vector<Node> getNeighbours(Node node, std::string whoami);
     int lookUpCost(Node node);
     std::string getFrame(void);
     void addTrajCache(std::map<double,std::pair<double,double>> trajectory);
+    void addGoalCache(std::vector<double*> goal_positions, std::vector<std::string> planner_names);
     void clearTrajCache(void);
 
 private:
@@ -80,6 +81,7 @@ private:
     double propogation_speed;
     // Cached trajectories for collision checking
     std::vector<std::map<double,std::pair<double,double>>> traj_cache;
+    std::map<std::string,double*> goal_cache;
 
 };
 
