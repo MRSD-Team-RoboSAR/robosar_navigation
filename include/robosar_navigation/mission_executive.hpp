@@ -69,6 +69,7 @@ private:
                 ROS_INFO("Processing Tasks %ld",agents.size());
                 // Process tasks from task allocator
                 gridmap.clearTrajCache();
+                gridmap.addGoalCache(targetPos,agents);
                 MultiAStar multi_astar(&gridmap,currPos,targetPos,agents);
 
                 ros::Duration(2.0).sleep();

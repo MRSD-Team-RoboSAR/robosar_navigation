@@ -2,7 +2,7 @@
 
 #include "graph_3d_grid.hpp"
 #include <ros/console.h>
-
+#include <vector>
 
 Graph3DGrid::Graph3DGrid(): allow_unknown(false) {
 
@@ -48,7 +48,7 @@ void Graph3DGrid::scaleCostMap()
 
 
 
-bool Graph3DGrid::collisionCheck(Node n) {
+bool Graph3DGrid::collisionCheck(Node n, std::string whoami) {
 
     // TODO
     if(costmap_[toNodeID(n)]>=COST_OBS_ROS)
@@ -59,11 +59,24 @@ bool Graph3DGrid::collisionCheck(Node n) {
         return false;
     
     std::vector<double> nodeMapFrame = toNodeInfo(n);
+    for(std::map<std::string,double*>::iterator it = goal_cache.begin();it!=goal_cache.end() ;it++) {
+        if(it->first == whoami)
+            continue;
+        else{
+            //Graph::Node goalCheckNode = graph->getNode(goal_check);
+            double* goalCheckPoint = it->second;
+            if(hypot(goalCheckPoint[0]-nodeMapFrame[0],goalCheckPoint[1]-nodeMapFrame[1])<COLLISION_THRESHOLD){
+                ROS_WARN("Goal of another agent is in collision! %f,%f\n", goalCheckPoint[0], goalCheckPoint[1]);
+                return true;
+            }
+        }
+    }
     for(auto traj_map:traj_cache) {
 
         // Lookup each trajectory using time lookup
         if(traj_map.find(n.t)!=traj_map.end())
         {
+            isDynamicCollision = true;
             std::pair<double,double> closest_point = traj_map[n.t];
             if(hypot(closest_point.first-nodeMapFrame[0],closest_point.second-nodeMapFrame[1])<COLLISION_THRESHOLD)
                 return true;
@@ -137,16 +150,20 @@ int Graph3DGrid::getDistanceBwNodes(Node node1, Node node2) {
     //return hypot(point2[0]-point1[0],point2[1]-point1[1]);
 }
 
-std::vector<Graph3DGrid::Node> Graph3DGrid::getNeighbours(Node n) {
+std::vector<Graph3DGrid::Node> Graph3DGrid::getNeighbours(Node n, std::string whoami) {
     // TODO
     std::vector<Node> neighbours;
-
+    isDynamicCollision = false;
     //int my = node_id/size_width;
     //int mx = node_id%size_width;
     for(int i=0;i<propogation_model.size();i++)
     {
         int nx = n.x + propogation_model[i][0];
         int ny = n.y + propogation_model[i][1];
+
+        // Dont add wait state if no dynamic collision
+        if(!isDynamicCollision && nx == n.x && ny == n.y)
+            continue;
 
         // Check if within boundary
         if(nx >=0 && nx <size_width && ny>=0 && ny<size_height)
@@ -159,7 +176,7 @@ std::vector<Graph3DGrid::Node> Graph3DGrid::getNeighbours(Node n) {
                 neighbour.isStart = true;
 
             // Check if collision free
-            if(!collisionCheck(neighbour)) {
+            if(!collisionCheck(neighbour,whoami)) {
                 neighbours.push_back(neighbour);
             }
         }
@@ -185,4 +202,12 @@ void Graph3DGrid::addTrajCache(std::map<double,std::pair<double,double>> traject
 void Graph3DGrid::clearTrajCache(void) {
 
     traj_cache.clear();
+}
+
+void Graph3DGrid::addGoalCache(std::vector<double*> goal_positions, std::vector<std::string> planner_names) {
+
+    goal_cache.clear();
+    for(int i=0;i<goal_positions.size();i++) {
+        goal_cache[planner_names[i]] = goal_positions[i];
+    }
 }

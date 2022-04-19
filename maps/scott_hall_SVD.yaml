@@ -1,6 +1,6 @@
 image: scott_hall_SVD.pgm
 resolution: 0.050000
-origin: [-10.743588, -8.061389, 0.000000]
+origin: [-10.678592, -7.971165, 0.000000]
 negate: 0
 occupied_thresh: 0.65
 free_thresh: 0.196
