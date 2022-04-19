@@ -10,7 +10,8 @@ Graph2DGrid::Graph2DGrid(): allow_unknown(false) {
     // @ TODO Indraneel This is called only once 
     // but if the map is changing then this need to be called whenever underlying costmap gets updated
     scaleCostMap();
-    propogation_model = {{1,0}, {0,1}, {-1,0}, {0,-1}};
+    //propogation_model = {{1,0}, {0,1}, {-1,0}, {0,-1}};
+    propogation_model = {{1,0}, {0,1}, {-1,0}, {0,-1}, {1,1},{-1,1},{1,-1},{-1,-1}};
 }
 
 Graph2DGrid::~Graph2DGrid() {
@@ -46,7 +47,7 @@ void Graph2DGrid::scaleCostMap()
 
 
 
-bool Graph2DGrid::collisionCheck(Node n) {
+bool Graph2DGrid::collisionCheck(Node n, std::string whoami) {
 
     // TODO
     if(costmap_[toNodeID(n)]>=COST_OBS_ROS)
@@ -78,13 +79,13 @@ Graph2DGrid::Node Graph2DGrid::getNode(double point[2]) {
     if(point[0]<origin_x || point[1]<origin_y || point[0]>origin_x+size_width*resolution || point[1]>origin_y+size_height*resolution)
     {
         ROS_WARN("Requested node off the graph!");
-        return Node(-1,-1);
+        return Node(-1,-1,0.0);
     }
     
     int mx = (int)((point[0] - origin_x) / resolution);
     int my = (int)((point[1] - origin_y) / resolution);
 
-    return Node(mx,my);
+    return Node(mx,my, 0.0);
 }
 
 std::vector<double> Graph2DGrid::toNodeInfo(Node n) {
@@ -96,6 +97,7 @@ std::vector<double> Graph2DGrid::toNodeInfo(Node n) {
 
     nodeInfo.push_back(origin_x+resolution*(n.x+0.5));
     nodeInfo.push_back(origin_y+resolution*(n.y+0.5));
+    nodeInfo.push_back(n.t);
 
     return nodeInfo;
 }
@@ -105,16 +107,14 @@ int Graph2DGrid::getNumNodes() {
     return size_width*size_height;
 }
 
-float Graph2DGrid::getDistanceBwNodes(Node node1, Node node2) {
+int Graph2DGrid::getDistanceBwNodes(Node node1, Node node2) {
     // TODO
-    std::vector<double> point1 = toNodeInfo(node1);
-    std::vector<double> point2 = toNodeInfo(node2);
 
     // Manhattan distance
-    return std::fabs(point2[0]-point1[0]) + std::fabs(point2[1]-point1[1]);
+    return std::fabs(node1.x-node2.x) + std::fabs(node1.y-node2.y);
 }
 
-std::vector<Graph2DGrid::Node> Graph2DGrid::getNeighbours(Node n) {
+std::vector<Graph2DGrid::Node> Graph2DGrid::getNeighbours(Node n, std::string whoami) {
     // TODO
     std::vector<Node> neighbours;
 
@@ -128,9 +128,9 @@ std::vector<Graph2DGrid::Node> Graph2DGrid::getNeighbours(Node n) {
         // Check if within boundary
         if(nx >=0 && nx <size_width && ny>=0 && ny<size_height)
         {   
-            Node neighbour(nx,ny); 
+            Node neighbour(nx,ny,n.t + 0.1); 
             // Check if collision free
-            if(!collisionCheck(neighbour)) {
+            if(!collisionCheck(neighbour,whoami)) {
                 neighbours.push_back(neighbour);
             }
         }
@@ -146,4 +146,17 @@ int Graph2DGrid::lookUpCost(Node n) {
 
 std::string Graph2DGrid::getFrame(void) {
     return map_frame_;
+}
+
+void Graph2DGrid::addTrajCache(std::map<double,std::pair<double,double>> trajectory) {
+    // for forward compatibility
+}
+    
+    
+void Graph2DGrid::addGoalCache(std::vector<double*> goal_positions, std::vector<std::string> planner_names) {
+    // for forward compatibility
+}
+
+void Graph2DGrid::clearTrajCache(void) {
+    // for forward compatibility
 }

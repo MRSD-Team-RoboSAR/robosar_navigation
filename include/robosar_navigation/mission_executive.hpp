@@ -187,7 +187,7 @@ private:
     std::vector<std::string> agents;
     std::vector<double*> currPos;
     std::vector<double*> targetPos;
-    Graph3DGrid gridmap;
+    Graph gridmap;
     ros::Subscriber status_subscriber_,task_allocation_subscriber;
     ros::NodeHandle nh_;
     bool fleet_status_outdated;
