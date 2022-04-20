@@ -54,6 +54,20 @@ bool Graph2DGrid::collisionCheck(Node n, std::string whoami) {
     if(costmap_[toNodeID(n)]>=COST_OBS_ROS)
         return true;
 
+    std::vector<double> nodeMapFrame = toNodeInfo(n);
+    for(std::map<std::string,double*>::iterator it = goal_cache.begin();it!=goal_cache.end() ;it++) {
+        if(it->first == whoami)
+            continue;
+        else{
+            //Graph::Node goalCheckNode = graph->getNode(goal_check);
+            double* goalCheckPoint = it->second;
+            if(hypot(goalCheckPoint[0]-nodeMapFrame[0],goalCheckPoint[1]-nodeMapFrame[1])<COLLISION_THRESHOLD){
+                ROS_WARN("Goal of another agent is in collision! %f,%f\n", goalCheckPoint[0], goalCheckPoint[1]);
+                return true;
+            }
+        }
+    }
+
     return false;
 }
 
@@ -156,6 +170,11 @@ void Graph2DGrid::addTrajCache(std::map<double,std::pair<double,double>> traject
     
 void Graph2DGrid::addGoalCache(std::vector<double*> goal_positions, std::vector<std::string> planner_names) {
     // for forward compatibility
+
+    goal_cache.clear();
+    for(int i=0;i<goal_positions.size();i++) {
+        goal_cache[planner_names[i]] = goal_positions[i];
+    }
 }
 
 void Graph2DGrid::clearTrajCache(void) {
