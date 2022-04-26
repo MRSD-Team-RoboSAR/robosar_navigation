@@ -15,7 +15,7 @@
 #include <vector>
 // Underlying graph datatype can be changed here
 #undef Graph
-#define Graph Graph3DGrid
+#define Graph Graph2DGrid
 
 #define POT_HIGH 1.0e10		// unassigned cell potential
 class AStar {

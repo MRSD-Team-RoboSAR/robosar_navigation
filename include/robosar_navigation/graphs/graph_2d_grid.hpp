@@ -18,6 +18,7 @@
 #define COST_NEUTRAL 5		// Set this to "open space" value
 #define COST_FACTOR 0.8		// Used for translating costs in NavFn::setCostmap()
 
+#define COLLISION_THRESHOLD 0.4 // Twice the radius of khepera robot
 class Graph2DGrid : Costmap2D {
 
 public:
@@ -26,11 +27,12 @@ public:
 
     class Node {
         public:
-            Node(int x, int y) : x(x),y(y) {}
+            Node(int x, int y, double t) : x(x),y(y),t(t) {}
             Node(void)  {
                 // Uninitialised
                 x = -1;
                 y = -1;
+                t = 0.0;
             }
 
             bool operator==(const Node &n) const
@@ -38,32 +40,42 @@ public:
                 return ((n.x==x) && (n.y==y));
             }
 
-            bool operator<(const Node &n) const
-            {
-                if(x!=n.x)
-                    return x<n.x;
-                else 
-                    return y<n.y;
-            }
+            // Hash function used by boost data structures
+            struct hashFunction {
+                std::size_t operator()(const Node&n) const {
+                    std::size_t seed = 0;
+                    boost::hash_combine(seed,n.x);
+                    boost::hash_combine(seed,n.y);
+
+                    return seed;
+                };
+            };
             
             int x; 
             int y;
+            double t;
+            bool isStart;
     };
 
-    bool collisionCheck(Node n);
+    bool collisionCheck(Node n, std::string whoami);
     int toNodeID(Node n);
     std::vector<double> toNodeInfo(Node n);
     int getNumNodes();
     Node getNode(double point[2]); 
-    float getDistanceBwNodes(Node node1, Node node2);
-    std::vector<Node> getNeighbours(Node node);
+    int getDistanceBwNodes(Node node1, Node node2);
+    std::vector<Node> getNeighbours(Node node,std::string whoami);
     int lookUpCost(Node node);
     std::string getFrame(void);
+    void addTrajCache(std::map<double,std::pair<double,double>> trajectory);
+    void addGoalCache(std::vector<double*> goal_positions, std::vector<std::string> planner_names);
+    void clearTrajCache(void);
 
 private:
     void scaleCostMap();
     bool allow_unknown;
     std::vector<std::vector<int>> propogation_model;
+    double propogation_speed;
+    std::map<std::string,double*> goal_cache;
 
 };
 
