@@ -72,8 +72,18 @@ private:
 
         while (ros::ok()) {
             
-            if(areControllersIdle() && !agents.empty())
+            if(!agentsCB.empty())
             {
+                // Copy over callback data
+                agents = agentsCB;
+                currPos = currPosCB;
+                targetPos = targetPosCB;
+
+                // clear callback data
+                agentsCB.clear();
+                currPosCB.clear();
+                targetPosCB.clear();
+
                 ROS_INFO("[MISSION_EXEC] Processing Tasks %ld",agents.size());
                 // Process tasks from task allocator
                 gridmap.clearTrajCache();
@@ -232,9 +242,9 @@ private:
             startHeap[1] = ta_msg.starty[i]; 
             startHeap[2] = 0.0; 
         
-            agents.push_back(ta_msg.id[i]);
-            currPos.push_back(startHeap);
-            targetPos.push_back(goalHeap);
+            agentsCB.push_back(ta_msg.id[i]);
+            currPosCB.push_back(startHeap);
+            targetPosCB.push_back(goalHeap);
             
             // Save them on the heap so that you can free them later
             goal_vec.push_back(goalHeap);
@@ -246,6 +256,10 @@ private:
     std::map<std::string,actionlib::SimpleActionClient<robosar_controller::RobosarControllerAction>*> client_map;
     std::set<std::string> fleet_info;
     ros::ServiceClient status_client; 
+
+    std::vector<std::string> agentsCB;
+    std::vector<double*> currPosCB;
+    std::vector<double*> targetPosCB;
 
     std::vector<std::string> agents;
     std::vector<double*> currPos;
