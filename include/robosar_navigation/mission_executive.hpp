@@ -15,6 +15,7 @@
 #include <actionlib/client/simple_action_client.h>
 #include <thread>
 #include <algorithm>
+#include <mutex>
 
 
 class MissionExecutive {
@@ -74,15 +75,18 @@ private:
             
             if(!agentsCB.empty())
             {
-                // Copy over callback data
-                agents = agentsCB;
-                currPos = currPosCB;
-                targetPos = targetPosCB;
+                {
+                    std::lock_guard<std::mutex> lock(mutex);
+                    // Copy over callback data
+                    agents = agentsCB;
+                    currPos = currPosCB;
+                    targetPos = targetPosCB;
 
-                // clear callback data
-                agentsCB.clear();
-                currPosCB.clear();
-                targetPosCB.clear();
+                    // clear callback data
+                    agentsCB.clear();
+                    currPosCB.clear();
+                    targetPosCB.clear();
+                }
 
                 ROS_INFO("[MISSION_EXEC] Processing Tasks %ld",agents.size());
                 // Process tasks from task allocator
@@ -228,7 +232,8 @@ private:
     }
 
     void taskAllocationCallback(robosar_messages::task_allocation ta_msg) {
-    
+        
+        std::lock_guard<std::mutex> lock(mutex);
         for(int i=0;i<ta_msg.id.size();i++){
             ROS_INFO("Start x:%f,y:%f, Goal x:%f,y:%f",ta_msg.startx[i],ta_msg.starty[i],ta_msg.goalx[i],ta_msg.goaly[i]);
 
@@ -273,6 +278,7 @@ private:
     // Since we are sending a pointer we need to keep these from going out of scope until search is complete
     std::vector<double*> goal_vec;
     std::vector<double*> start_vec;
+    std::mutex mutex;
 };
 
 #endif
