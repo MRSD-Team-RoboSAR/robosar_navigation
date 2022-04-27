@@ -21,7 +21,7 @@
 class MissionExecutive {
 
 public:
-    MissionExecutive() : nh_("") {
+    MissionExecutive() : nh_(""), arbitraryPoint{-2000000.0,-20000000.0}  {
 
         ROS_INFO("Starting a new RoboSAR Nav Mission! Get ready for a show!");
 
@@ -165,6 +165,13 @@ private:
                     ROS_WARN("[MISSION_EXEC] Preempting controller action execution for %s",&(*it)[0]);
                     client_map[*it]->cancelGoal();
                 }
+
+                // Graph cleanup
+                std::vector<std::string> agents_temp;
+                std::vector<double*> targetPos_temp;
+                agents_temp.push_back(*it);
+                targetPos_temp.push_back(arbitraryPoint);
+                gridmap.addGoalCache(targetPos_temp,agents_temp);
             }
         }
         
@@ -279,6 +286,7 @@ private:
     std::vector<double*> goal_vec;
     std::vector<double*> start_vec;
     std::mutex mutex;
+    double arbitraryPoint[2];
 };
 
 #endif
