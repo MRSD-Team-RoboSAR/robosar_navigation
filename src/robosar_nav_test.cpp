@@ -11,7 +11,7 @@ int main(int argc, char **argv)
 {
   ros::init(argc, argv, "robosar_nav_test_node");
   //move_base::MoveBase move_base( buffer );
-  Graph3DGrid gridmap;
+  Graph gridmap;
 
   // Create endpoints
   std::vector<double*> currPos;
