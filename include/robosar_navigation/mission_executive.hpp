@@ -14,16 +14,18 @@
 #include "actionlib_msgs/GoalStatus.h"
 #include <actionlib/client/simple_action_client.h>
 #include <thread>
+#include <algorithm>
+#include <mutex>
 
 
 class MissionExecutive {
 
 public:
-    MissionExecutive() : nh_("") {
+    MissionExecutive() : nh_(""), arbitraryPoint{-2000000.0,-20000000.0}  {
 
         ROS_INFO("Starting a new RoboSAR Nav Mission! Get ready for a show!");
 
-        status_subscriber_ = nh_.subscribe("/robosar_agent_bringup/status", 1, &MissionExecutive::statusCallback, this);
+        status_subscriber_ = nh_.subscribe("/robosar_agent_bringup_node/status", 1, &MissionExecutive::statusCallback, this);
         task_allocation_subscriber = nh_.subscribe("task_allocation", 10, &MissionExecutive::taskAllocationCallback,this);
         // Get latest fleet info from agent bringup
         status_client = nh_.serviceClient<robosar_messages::agent_status>("/robosar_agent_bringup_node/agent_status");
@@ -32,6 +34,8 @@ public:
         ROS_INFO(" [MISSION_EXEC] Active fleet size %ld",fleet_info.size());
         // Create controllers for these agents
         createControllerActionServers(fleet_info);
+        // Create clients for these controllers
+        createControllerActionClients(fleet_info);
         
         fleet_status_outdated = false;
         
@@ -43,6 +47,11 @@ public:
 
         // destroy controller servers
         for(std::map<std::string,LGControllerAction*>::iterator it=controller_map.begin();it!= controller_map.end();it++ )
+            delete it->second;
+
+        // destroy controller clients
+        for(std::map<std::string,actionlib::SimpleActionClient<robosar_controller::RobosarControllerAction>*>::iterator it=client_map.begin();
+                                                                            it!= client_map.end();it++ )
             delete it->second;
 
         // free the heap
@@ -64,9 +73,22 @@ private:
 
         while (ros::ok()) {
             
-            if(areControllersIdle() && !agents.empty())
+            if(!agentsCB.empty())
             {
-                ROS_INFO("Processing Tasks %ld",agents.size());
+                {
+                    std::lock_guard<std::mutex> lock(mutex);
+                    // Copy over callback data
+                    agents = agentsCB;
+                    currPos = currPosCB;
+                    targetPos = targetPosCB;
+
+                    // clear callback data
+                    agentsCB.clear();
+                    currPosCB.clear();
+                    targetPosCB.clear();
+                }
+
+                ROS_INFO("[MISSION_EXEC] Processing Tasks %ld",agents.size());
                 // Process tasks from task allocator
                 gridmap.clearTrajCache();
                 gridmap.addGoalCache(targetPos,agents);
@@ -80,12 +102,13 @@ private:
                     // Check if planning was successful
                     if(multi_astar.trajectory_map.find(agent)!=multi_astar.trajectory_map.end())  {
 
-                        actionlib::SimpleActionClient<robosar_controller::RobosarControllerAction> ac(agent, true);
-                        ROS_INFO("Waiting for action server to start.");
+                        actionlib::SimpleActionClient<robosar_controller::RobosarControllerAction> *ac 
+                                    = client_map[agent];
+                        ROS_INFO("[MISSION_EXEC] Waiting for action server to start.");
                         // wait for the action server to start
                         //ac.waitForServer(); //will wait for infinite time
 
-                        ROS_INFO("Action server started, sending goal.");
+                        ROS_INFO("[MISSION_EXEC] Action server started, sending goal.");
                         robosar_controller::RobosarControllerGoal goal;
                         
                         // Get the trajectory from the map
@@ -94,7 +117,7 @@ private:
                             goal.path.poses.push_back(pose);
   
                         // Send the goal
-                         ac.sendGoal(goal);
+                         ac->sendGoal(goal);
                     }
                 }
 
@@ -104,10 +127,54 @@ private:
                 targetPos.clear();
 
             }
+            else if(fleet_status_outdated) {
+                ROS_WARN("[MISSION_EXEC] New fleet info received!!");
+                processNewAgentStatus(getFleetStatusInfo());
+                fleet_status_outdated = false;
+            }
             
             loop_rate.sleep();
         }
 
+    }
+
+    void processNewAgentStatus(std::set<string> new_fleet_info) {
+
+        // Get newly added agents
+        std::set<string> additions;
+        std::set<string> subtractions;
+        std::set_difference(new_fleet_info.begin(), new_fleet_info.end(),
+                                fleet_info.begin(), fleet_info.end(), std::inserter(additions, additions.begin()));
+
+        std::set_difference(fleet_info.begin(), fleet_info.end(),
+                                new_fleet_info.begin(), new_fleet_info.end(), std::inserter(subtractions, subtractions.begin()));
+
+        if(!additions.empty()) {
+            createControllerActionServers(additions);
+            createControllerActionClients(additions);
+
+            // Add them to our fleet info!
+            fleet_info.insert(additions.begin(),additions.end());
+        }
+
+        if(!subtractions.empty()) {
+            // Dont destroy the action server for now
+            // Just stop it from executing
+            for(std::set<string>::iterator it=subtractions.begin();it!=subtractions.end();it++) {
+                if(controller_map[*it]->as_.isActive()) {
+                    ROS_WARN("[MISSION_EXEC] Preempting controller action execution for %s",&(*it)[0]);
+                    client_map[*it]->cancelGoal();
+                }
+
+                // Graph cleanup
+                std::vector<std::string> agents_temp;
+                std::vector<double*> targetPos_temp;
+                agents_temp.push_back(*it);
+                targetPos_temp.push_back(arbitraryPoint);
+                gridmap.addGoalCache(targetPos_temp,agents_temp);
+            }
+        }
+        
     }
 
     bool areControllersIdle() {
@@ -135,7 +202,7 @@ private:
         }
         else
         {
-            ROS_ERROR("Failed to call fleet info service");
+            ROS_ERROR("[MISSION_EXEC] Failed to call fleet info service");
             return fleet_info;
         }
     }
@@ -145,18 +212,35 @@ private:
         for(auto agent:new_agents){
             // Create new controller server
             LGControllerAction *controller = new LGControllerAction(agent);
+            ROS_DEBUG("[MISSION_EXEC] Created controller for %s",&agent[0]);
             // save it in the map
             controller_map[agent] = controller;
         }
         return true;
     }
 
+     bool createControllerActionClients(std::set<std::string> new_agents) {
+        
+        for(auto agent:new_agents){
+            // Create new controller client
+            actionlib::SimpleActionClient<robosar_controller::RobosarControllerAction>* ac = 
+                                    new actionlib::SimpleActionClient<robosar_controller::RobosarControllerAction>(agent, true);
+            ROS_DEBUG("[MISSION_EXEC] Created controller client for %s",&agent[0]);
+            // save it in the map
+            client_map[agent] = ac;
+        }
+        return true;
+    }
+
+    
+
     void statusCallback(const std_msgs::Bool &status_msg) {
         fleet_status_outdated = true;
     }
 
     void taskAllocationCallback(robosar_messages::task_allocation ta_msg) {
-    
+        
+        std::lock_guard<std::mutex> lock(mutex);
         for(int i=0;i<ta_msg.id.size();i++){
             ROS_INFO("Start x:%f,y:%f, Goal x:%f,y:%f",ta_msg.startx[i],ta_msg.starty[i],ta_msg.goalx[i],ta_msg.goaly[i]);
 
@@ -170,9 +254,9 @@ private:
             startHeap[1] = ta_msg.starty[i]; 
             startHeap[2] = 0.0; 
         
-            agents.push_back(ta_msg.id[i]);
-            currPos.push_back(startHeap);
-            targetPos.push_back(goalHeap);
+            agentsCB.push_back(ta_msg.id[i]);
+            currPosCB.push_back(startHeap);
+            targetPosCB.push_back(goalHeap);
             
             // Save them on the heap so that you can free them later
             goal_vec.push_back(goalHeap);
@@ -181,8 +265,13 @@ private:
     }
 
     std::map<std::string,LGControllerAction*> controller_map;
+    std::map<std::string,actionlib::SimpleActionClient<robosar_controller::RobosarControllerAction>*> client_map;
     std::set<std::string> fleet_info;
     ros::ServiceClient status_client; 
+
+    std::vector<std::string> agentsCB;
+    std::vector<double*> currPosCB;
+    std::vector<double*> targetPosCB;
 
     std::vector<std::string> agents;
     std::vector<double*> currPos;
@@ -196,6 +285,8 @@ private:
     // Since we are sending a pointer we need to keep these from going out of scope until search is complete
     std::vector<double*> goal_vec;
     std::vector<double*> start_vec;
+    std::mutex mutex;
+    double arbitraryPoint[2];
 };
 
 #endif

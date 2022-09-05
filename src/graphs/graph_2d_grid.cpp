@@ -170,8 +170,9 @@ void Graph2DGrid::addTrajCache(std::map<double,std::pair<double,double>> traject
     
 void Graph2DGrid::addGoalCache(std::vector<double*> goal_positions, std::vector<std::string> planner_names) {
     // for forward compatibility
-
-    goal_cache.clear();
+    
+    // Now that we are planning for single agents, we shouldn't clear goal cache each time. 
+    //goal_cache.clear();
     for(int i=0;i<goal_positions.size();i++) {
         goal_cache[planner_names[i]] = goal_positions[i];
     }
