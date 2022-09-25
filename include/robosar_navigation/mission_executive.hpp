@@ -77,7 +77,7 @@ private:
                 bool status = multi_astar.run_multi_astar();
 
                 // Create service request
-                ros::ServiceClient controller_client = nh_.serviceClient<robosar_messages::robosar_controller>("lazy_traffic_controller");
+                ros::ServiceClient controller_client = nh_.serviceClient<robosar_messages::robosar_controller>("robosar_controller/lazy_traffic_controller");
                 ROS_INFO("[MISSION_EXEC] Waiting for controller service to start.");
                 // wait for the action server to start
                 controller_client.waitForExistence(); //will wait for infinite time
@@ -85,6 +85,7 @@ private:
 
                 robosar_messages::robosar_controller srv;
                 srv.request.agent_names = agents;
+                std::vector<nav_msgs::Path> agent_paths;
                 for(int i=0;i<agents.size();i++) {
                     
                     // Check if planning was successful
@@ -92,10 +93,13 @@ private:
 
                         // // Get the trajectory from the map
                         std::vector<geometry_msgs::PoseStamped> traj_agent =  multi_astar.trajectory_map[agents[i]];
+                        nav_msgs::Path path_agent;
                         for(auto pose:traj_agent)
-                            srv.request.paths[i].poses.push_back(pose);
+                            path_agent.poses.push_back(pose);
+                        agent_paths.push_back(path_agent);
                     }
                 }
+                srv.request.paths = agent_paths;
 
                 // Call the controller service
                 if (controller_client.call(srv))
