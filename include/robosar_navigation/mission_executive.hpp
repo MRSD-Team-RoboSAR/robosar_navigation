@@ -84,8 +84,6 @@ private:
                 ROS_INFO("[MISSION_EXEC] Controller server started, sending goal.");
 
                 robosar_messages::robosar_controller srv;
-                srv.request.agent_names = agents;
-                std::vector<nav_msgs::Path> agent_paths;
                 for(int i=0;i<agents.size();i++) {
                     
                     // Check if planning was successful
@@ -96,10 +94,12 @@ private:
                         nav_msgs::Path path_agent;
                         for(auto pose:traj_agent)
                             path_agent.poses.push_back(pose);
-                        agent_paths.push_back(path_agent);
+                        // Add agent path to the service request
+                        srv.request.paths.push_back(path_agent);
+                        srv.request.agent_names.push_back(agents[i]);
+                        
                     }
                 }
-                srv.request.paths = agent_paths;
 
                 // Call the controller service
                 if (controller_client.call(srv))
