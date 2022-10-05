@@ -23,6 +23,7 @@ protected:
     std::string map_frame_;  /// @brief frame that map is located in
     ros::NodeHandle nh_;
     unsigned char* costmap_;
+    bool has_updated_data_;
 
 private:
     void incomingMap(const nav_msgs::OccupancyGridConstPtr& new_map);
@@ -42,7 +43,6 @@ private:
     bool track_unknown_space;
     bool trinary_costmap;
     bool map_received_;
-    bool has_updated_data_;
     nav_msgs::OccupancyGrid grid_;
     // TODO update_sub
     ros::Subscriber map_sub_, map_update_sub_;

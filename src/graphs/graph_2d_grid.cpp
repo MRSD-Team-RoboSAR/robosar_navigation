@@ -44,6 +44,8 @@ void Graph2DGrid::scaleCostMap()
             }
     }
 
+    // Mark scaling as done
+    has_updated_data_ = false;
 }
 
 
@@ -51,6 +53,9 @@ void Graph2DGrid::scaleCostMap()
 bool Graph2DGrid::collisionCheck(Node n, std::string whoami) {
 
     // TODO
+    if(has_updated_data_)
+        scaleCostMap();
+
     if(costmap_[toNodeID(n)]>=COST_OBS_ROS)
         return true;
 
@@ -156,6 +161,9 @@ std::vector<Graph2DGrid::Node> Graph2DGrid::getNeighbours(Node n, std::string wh
 int Graph2DGrid::lookUpCost(Node n) {
 
     // TODO
+    if(has_updated_data_)
+        scaleCostMap();
+        
     return (int)costmap_[toNodeID(n)];
 }
 
