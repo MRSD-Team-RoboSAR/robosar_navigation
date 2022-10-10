@@ -2,6 +2,8 @@
 
 #include "graph_2d_grid.hpp"
 #include <ros/console.h>
+#include <queue>
+#include <unordered_set>
 
 
 Graph2DGrid::Graph2DGrid(): allow_unknown(false) {
@@ -44,6 +46,8 @@ void Graph2DGrid::scaleCostMap()
             }
     }
 
+    // Mark scaling as done
+    has_updated_data_ = false;
 }
 
 
@@ -51,6 +55,9 @@ void Graph2DGrid::scaleCostMap()
 bool Graph2DGrid::collisionCheck(Node n, std::string whoami) {
 
     // TODO
+    if(has_updated_data_)
+        scaleCostMap();
+
     if(costmap_[toNodeID(n)]>=COST_OBS_ROS)
         return true;
 
@@ -129,7 +136,7 @@ int Graph2DGrid::getDistanceBwNodes(Node node1, Node node2) {
     return std::fabs(node1.x-node2.x) + std::fabs(node1.y-node2.y);
 }
 
-std::vector<Graph2DGrid::Node> Graph2DGrid::getNeighbours(Node n, std::string whoami) {
+std::vector<Graph2DGrid::Node> Graph2DGrid::getNeighbours(Node n, std::string whoami, bool collision_check) {
     // TODO
     std::vector<Node> neighbours;
 
@@ -145,7 +152,7 @@ std::vector<Graph2DGrid::Node> Graph2DGrid::getNeighbours(Node n, std::string wh
         {   
             Node neighbour(nx,ny,n.t + (resolution/propogation_speed)); 
             // Check if collision free
-            if(!collisionCheck(neighbour,whoami)) {
+            if(!collisionCheck(neighbour,whoami) || !collision_check) {
                 neighbours.push_back(neighbour);
             }
         }
@@ -156,6 +163,9 @@ std::vector<Graph2DGrid::Node> Graph2DGrid::getNeighbours(Node n, std::string wh
 int Graph2DGrid::lookUpCost(Node n) {
 
     // TODO
+    if(has_updated_data_)
+        scaleCostMap();
+
     return (int)costmap_[toNodeID(n)];
 }
 
@@ -180,4 +190,37 @@ void Graph2DGrid::addGoalCache(std::vector<double*> goal_positions, std::vector<
 
 void Graph2DGrid::clearTrajCache(void) {
     // for forward compatibility
+}
+
+Graph2DGrid::Node Graph2DGrid::getClosestFreeNode(Node n, std::string whoami) {  
+
+    // TODO
+    // Breadth first search until a free node is found
+    std::queue<Node> q;
+    std::unordered_set<Node,Node::hashFunction> visited;
+    q.push(n);
+    visited.insert(n);
+    int iter = 0;
+    while(!q.empty()) {
+        Node current = q.front();
+        q.pop();
+
+        if(!collisionCheck(current,whoami)) {
+            ROS_WARN("Found free node after %d iterations", iter);
+            return current;
+        }
+
+        std::vector<Node> neighbours = getNeighbours(current,whoami,false);
+        for(int i=0;i<neighbours.size();i++) {
+            if(visited.find(neighbours[i]) == visited.end()) {
+                q.push(neighbours[i]);
+                visited.insert(neighbours[i]);
+            }
+        }
+        iter++;
+    }
+
+    // If not, return the node itself
+    ROS_ERROR("No free node after %d iterations", iter);
+    return n;
 }

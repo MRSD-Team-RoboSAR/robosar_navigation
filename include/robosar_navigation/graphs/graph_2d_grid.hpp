@@ -63,12 +63,13 @@ public:
     int getNumNodes();
     Node getNode(double point[2]); 
     int getDistanceBwNodes(Node node1, Node node2);
-    std::vector<Node> getNeighbours(Node node,std::string whoami);
+    std::vector<Node> getNeighbours(Node node,std::string whoami, bool collision_check=true);
     int lookUpCost(Node node);
     std::string getFrame(void);
     void addTrajCache(std::map<double,std::pair<double,double>> trajectory);
     void addGoalCache(std::vector<double*> goal_positions, std::vector<std::string> planner_names);
     void clearTrajCache(void);
+    Node getClosestFreeNode(Node n, std::string whoami);
 
 private:
     void scaleCostMap();

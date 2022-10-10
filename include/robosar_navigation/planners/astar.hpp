@@ -36,12 +36,19 @@ public:
         if(graph->collisionCheck(goalNode,planner_name))
         {
             ROS_WARN("[AStar] Goal in collision! %f,%f\n", goal[0], goal[1]);
-            return;
+            goalNode = graph->getClosestFreeNode(goalNode, planner_name);
+            std::vector<double> goalInfo = graph->toNodeInfo(goalNode);
+            goal[0] = goalInfo[0];
+            goal[1] = goalInfo[1];
         }
-        else if(graph->collisionCheck(startNode,planner_name))
+        
+        if(graph->collisionCheck(startNode,planner_name))
         {
-           ROS_WARN("[AStar] Start in collision! %f,%f\n", start[0], start[1]); 
-           return;
+            ROS_WARN("[AStar] Start in collision! %f,%f\n", start[0], start[1]); 
+            startNode = graph->getClosestFreeNode(startNode, planner_name);
+            std::vector<double> startInfo = graph->toNodeInfo(startNode);
+            start[0] = startInfo[0];
+            start[1] = startInfo[1];
         }
 
         ROS_INFO("[AStar] Setting goal to %f,%f\n", goal[0], goal[1]);
