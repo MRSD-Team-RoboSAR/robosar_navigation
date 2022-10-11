@@ -9,7 +9,7 @@
 #include <std_msgs/Bool.h>
 #include "robosar_messages/agent_status.h"
 #include "lg_action_server.hpp"
-
+#include "robosar_messages/mission_command.h"
 #include <robosar_messages/robosar_controller.h>
 #include "robosar_messages/task_allocation.h"
 #include "actionlib_msgs/GoalStatus.h"
@@ -29,6 +29,7 @@ public:
         task_allocation_subscriber = nh_.subscribe("task_allocation", 10, &MissionExecutive::taskAllocationCallback,this);
 
         // Running our executive
+        gui_subscriber_ = nh_.subscribe("/system_mission_command", 1, &MissionExecutive::eStopCallback, this);
         mission_thread_ = std::thread(&MissionExecutive::run_mission, this);
     }
 
@@ -52,7 +53,11 @@ private:
 
         while (ros::ok()) {
             
-            if(!agentsCB.empty())
+            if(eStopCommanded) {
+                ROS_INFO("[MISSION_EXEC] ESTOP recived! Shutting down rbosar_nav!");
+                processEStop();
+            }
+            else if(!agentsCB.empty())
             {
                 {
                     std::lock_guard<std::mutex> lock(mutex);
@@ -99,7 +104,6 @@ private:
                         
                     }
                 }
-
                 // Call the controller service
                 if (controller_client.call(srv))
                 {
@@ -120,6 +124,37 @@ private:
             loop_rate.sleep();
         }
 
+    }
+
+    void eStopCallback(robosar_messages::mission_command gui_msg) {
+        if(gui_msg.data==2) {
+            eStopCommanded = true;
+        }
+        
+    }
+
+    void processEStop() {
+
+        ros::ServiceClient controller_client = nh_.serviceClient<robosar_messages::robosar_controller>("robosar_controller/lazy_traffic_controller");
+        ROS_INFO("[MISSION_EXEC] Waiting for controller service to start. ");
+        // wait for the action server to start
+        controller_client.waitForExistence(); //will wait for infinite time
+
+        robosar_messages::robosar_controller srv;
+        if(eStopCommanded) {
+            srv.request.stop_controller = true;
+            
+        }
+        // Call the controller service
+        if (controller_client.call(srv))
+        {
+            ROS_INFO("[MISSION_EXEC] Controller service called successfully");
+            eStopCommanded = false;
+        }
+        else
+        {
+            ROS_ERROR("[MISSION_EXEC] Failed to call controller service");
+        }
     }
 
     void taskAllocationCallback(robosar_messages::task_allocation ta_msg) {
@@ -159,10 +194,11 @@ private:
     std::vector<double*> currPos;
     std::vector<double*> targetPos;
     Graph gridmap;
-    ros::Subscriber status_subscriber_,task_allocation_subscriber;
+    ros::Subscriber status_subscriber_,task_allocation_subscriber, gui_subscriber_;
     ros::NodeHandle nh_;
     bool fleet_status_outdated;
     std::thread mission_thread_;
+    bool eStopCommanded = false;
 
     // Since we are sending a pointer we need to keep these from going out of scope until search is complete
     std::vector<double*> goal_vec;
