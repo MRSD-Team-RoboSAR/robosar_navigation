@@ -53,7 +53,11 @@ private:
 
         while (ros::ok()) {
             
-            if(!agentsCB.empty())
+            if(eStopCommanded) {
+                ROS_INFO("[MISSION_EXEC] ESTOP recived! Shutting down rbosar_nav!");
+                processEStop();
+            }
+            else if(!agentsCB.empty())
             {
                 {
                     std::lock_guard<std::mutex> lock(mutex);
@@ -101,14 +105,10 @@ private:
                         
                     }
                 }
-                if(eStopCommanded) {
-                    srv.request.stop_controller = true;
-                }
                 // Call the controller service
                 if (controller_client.call(srv))
                 {
                     ROS_INFO("[MISSION_EXEC] Controller service called successfully");
-                    eStopCommanded = false;
                 }
                 else
                 {
@@ -119,30 +119,6 @@ private:
                 agents.clear();
                 currPos.clear();
                 targetPos.clear();
-
-            }
-            else {
-
-                ros::ServiceClient controller_client = nh_.serviceClient<robosar_messages::robosar_controller>("robosar_controller/lazy_traffic_controller");
-                ROS_INFO("[MISSION_EXEC] Waiting for controller service to start. ");
-                // wait for the action server to start
-                controller_client.waitForExistence(); //will wait for infinite time
-
-                robosar_messages::robosar_controller srv;
-                if(eStopCommanded) {
-                    srv.request.stop_controller = true;
-                    
-                }
-                // Call the controller service
-                if (controller_client.call(srv))
-                {
-                    ROS_INFO("[MISSION_EXEC] Controller service called successfully");
-                    eStopCommanded = false;
-                }
-                else
-                {
-                    ROS_ERROR("[MISSION_EXEC] Failed to call controller service");
-                }
 
             }
             
@@ -156,6 +132,30 @@ private:
             eStopCommanded = true;
         }
         
+    }
+
+    void processEStop() {
+
+        ros::ServiceClient controller_client = nh_.serviceClient<robosar_messages::robosar_controller>("robosar_controller/lazy_traffic_controller");
+        ROS_INFO("[MISSION_EXEC] Waiting for controller service to start. ");
+        // wait for the action server to start
+        controller_client.waitForExistence(); //will wait for infinite time
+
+        robosar_messages::robosar_controller srv;
+        if(eStopCommanded) {
+            srv.request.stop_controller = true;
+            
+        }
+        // Call the controller service
+        if (controller_client.call(srv))
+        {
+            ROS_INFO("[MISSION_EXEC] Controller service called successfully");
+            eStopCommanded = false;
+        }
+        else
+        {
+            ROS_ERROR("[MISSION_EXEC] Failed to call controller service");
+        }
     }
 
     void taskAllocationCallback(robosar_messages::task_allocation ta_msg) {
