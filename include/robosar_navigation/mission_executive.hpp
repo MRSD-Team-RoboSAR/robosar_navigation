@@ -9,7 +9,7 @@
 #include <std_msgs/Bool.h>
 #include "robosar_messages/agent_status.h"
 #include "lg_action_server.hpp"
-#include "robosar_messages"
+#include "robosar_messages/mission_command.h"
 #include <robosar_messages/robosar_controller.h>
 #include "robosar_messages/task_allocation.h"
 #include "actionlib_msgs/GoalStatus.h"
@@ -29,7 +29,7 @@ public:
         task_allocation_subscriber = nh_.subscribe("task_allocation", 10, &MissionExecutive::taskAllocationCallback,this);
 
         // Running our executive
-        gui_subscriber = nh_.subscribe("/system_mission_command", 1, &MissionExecutive::eStopCallback, this);
+        gui_subscriber_ = nh_.subscribe("/system_mission_command", 1, &MissionExecutive::eStopCallback, this);
         mission_thread_ = std::thread(&MissionExecutive::run_mission, this);
     }
 
@@ -101,7 +101,6 @@ private:
                         
                     }
                 }
-
                 if(eStopCommanded) {
                     srv.request.stop_controller = true;
                 }
@@ -109,6 +108,7 @@ private:
                 if (controller_client.call(srv))
                 {
                     ROS_INFO("[MISSION_EXEC] Controller service called successfully");
+                    eStopCommanded = false;
                 }
                 else
                 {
@@ -127,16 +127,17 @@ private:
                 ROS_INFO("[MISSION_EXEC] Waiting for controller service to start. ");
                 // wait for the action server to start
                 controller_client.waitForExistence(); //will wait for infinite time
-                ROS_INFO("[MISSION_EXEC] Controller server started, sending estop. ");
 
                 robosar_messages::robosar_controller srv;
                 if(eStopCommanded) {
                     srv.request.stop_controller = true;
+                    
                 }
                 // Call the controller service
                 if (controller_client.call(srv))
                 {
                     ROS_INFO("[MISSION_EXEC] Controller service called successfully");
+                    eStopCommanded = false;
                 }
                 else
                 {
@@ -154,6 +155,7 @@ private:
         if(gui_msg.data==2) {
             eStopCommanded = true;
         }
+        
     }
 
     void taskAllocationCallback(robosar_messages::task_allocation ta_msg) {
