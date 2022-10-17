@@ -212,6 +212,8 @@ Graph2DGrid::Node Graph2DGrid::getClosestFreeNode(Node n, std::string whoami) {
 
         std::vector<Node> neighbours = getNeighbours(current,whoami,false);
         for(int i=0;i<neighbours.size();i++) {
+            // Override time
+            neighbours[i].t = 0.0;
             if(visited.find(neighbours[i]) == visited.end()) {
                 q.push(neighbours[i]);
                 visited.insert(neighbours[i]);
