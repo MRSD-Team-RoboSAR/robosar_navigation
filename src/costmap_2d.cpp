@@ -63,7 +63,7 @@ void Costmap2D::create_translation_table() {
 
 void Costmap2D::incomingMap(const nav_msgs::OccupancyGridConstPtr& new_map)
 {
-  std::lock_guard<std::mutex> guard(mtx);
+  std::lock_guard<std::mutex> guard(map_update_mtx_);
   unsigned int size_x = new_map->info.width, size_y = new_map->info.height;
 
   ROS_INFO("Received a %d X %d map at %f m/pix with origin %f %f", size_x, size_y, 
@@ -110,7 +110,6 @@ void Costmap2D::incomingMap(const nav_msgs::OccupancyGridConstPtr& new_map)
   
   map_received_ = true;
   has_updated_data_ = true;
-
  
 }
 
@@ -143,8 +142,8 @@ void Costmap2D::onNewSubscription(const ros::SingleSubscriberPublisher& pub)
 
 void Costmap2D::prepareGrid()
 {
-  std::lock_guard<std::mutex> guard(mtx);
-
+  std::lock_guard<std::mutex> guard(map_update_mtx_);
+  
   grid_.header.frame_id = map_frame_;
   grid_.header.stamp = ros::Time::now();
   grid_.info.resolution = resolution;

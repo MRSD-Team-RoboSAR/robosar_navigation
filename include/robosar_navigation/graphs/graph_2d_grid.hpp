@@ -19,7 +19,7 @@
 #define COST_FACTOR 0.8		// Used for translating costs in NavFn::setCostmap()
 
 #define COLLISION_THRESHOLD 0.4 // Twice the radius of khepera robot
-class Graph2DGrid : Costmap2D {
+class Graph2DGrid : public Costmap2D {
 
 public:
     Graph2DGrid();
