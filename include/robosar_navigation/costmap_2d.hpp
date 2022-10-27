@@ -13,6 +13,7 @@ class Costmap2D
 public:
     Costmap2D();
     ~Costmap2D();
+    std::mutex& getMapUpdateMutex() { return map_update_mtx_; }
 
 protected:
     unsigned int size_width;
@@ -39,7 +40,7 @@ private:
     double inflation_cost_scaling_factor;
     CostInflator inflator_;
     static char* cost_translation_table_;  ///< Translate from 0-255 values in costmap to -1 to 100 values in message.
-    std::mutex mtx;
+    std::mutex map_update_mtx_;
     bool track_unknown_space;
     bool trinary_costmap;
     bool map_received_;
