@@ -68,6 +68,10 @@ public:
         
         initialiseExpansionMarker();
         planner_initialised = true;
+
+        // default parent for goal is start
+        cameFrom[goalNode] = startNode;
+
     }
 
     ~AStar(){
