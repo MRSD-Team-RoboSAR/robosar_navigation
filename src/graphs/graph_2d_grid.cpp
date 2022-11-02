@@ -6,7 +6,7 @@
 #include <unordered_set>
 
 
-Graph2DGrid::Graph2DGrid(): allow_unknown(false) {
+Graph2DGrid::Graph2DGrid(): allow_unknown(true) {
 
 
     // @ TODO Indraneel This is called only once 
