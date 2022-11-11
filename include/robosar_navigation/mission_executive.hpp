@@ -65,11 +65,13 @@ private:
                     agents = agentsCB;
                     currPos = currPosCB;
                     targetPos = targetPosCB;
+                    goalType = goalTypeCB;
 
                     // clear callback data
                     agentsCB.clear();
                     currPosCB.clear();
                     targetPosCB.clear();
+                    goalTypeCB.clear();
                 }
 
                 ROS_INFO("[MISSION_EXEC] Processing Tasks %ld",agents.size());
@@ -101,7 +103,7 @@ private:
                         // Add agent path to the service request
                         srv.request.paths.push_back(path_agent);
                         srv.request.agent_names.push_back(agents[i]);
-                        
+                        srv.request.goal_type.push_back(goalType[i]);
                     }
                 }
                 // Call the controller service
@@ -118,6 +120,7 @@ private:
                 agents.clear();
                 currPos.clear();
                 targetPos.clear();
+                goalType.clear();
 
             }
             
@@ -161,7 +164,7 @@ private:
         
         std::lock_guard<std::mutex> lock(mutex);
         for(int i=0;i<ta_msg.id.size();i++){
-            ROS_INFO("Start x:%f,y:%f, Goal x:%f,y:%f",ta_msg.startx[i],ta_msg.starty[i],ta_msg.goalx[i],ta_msg.goaly[i]);
+            ROS_INFO("Start x:%f,y:%f, Goal x:%f,y:%f, Type: %d",ta_msg.startx[i],ta_msg.starty[i],ta_msg.goalx[i],ta_msg.goaly[i],ta_msg.goal_type[i]);
 
             double* goalHeap = new double[3];
             goalHeap[0] = ta_msg.goalx[i]; 
@@ -176,6 +179,7 @@ private:
             agentsCB.push_back(ta_msg.id[i]);
             currPosCB.push_back(startHeap);
             targetPosCB.push_back(goalHeap);
+            goalTypeCB.push_back(ta_msg.goal_type[i]);
             
             // Save them on the heap so that you can free them later
             goal_vec.push_back(goalHeap);
@@ -189,10 +193,12 @@ private:
     std::vector<std::string> agentsCB;
     std::vector<double*> currPosCB;
     std::vector<double*> targetPosCB;
+    std::vector<int> goalTypeCB;
 
     std::vector<std::string> agents;
     std::vector<double*> currPos;
     std::vector<double*> targetPos;
+    std::vector<int> goalType;
     Graph gridmap;
     ros::Subscriber status_subscriber_,task_allocation_subscriber, gui_subscriber_;
     ros::NodeHandle nh_;
