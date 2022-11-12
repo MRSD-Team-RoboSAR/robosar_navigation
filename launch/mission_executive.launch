@@ -4,7 +4,7 @@
     	<node name="map_server" pkg="map_server" type="map_server" args="$(find robosar_sim_bringup)/worlds/stage_config/maps/willow_full.yaml"/> 
 		 <node name="map_server" pkg="map_server" type="map_server" args="$(find robosar_navigation)/maps/blank_map.yaml"/>  -->
 
-	 <node name="robosar_mission_execute" pkg="robosar_navigation" type="robosar_mission_execute" output="screen" launch-prefix="gdb -ex run --args"/> 
+	 <node name="robosar_mission_execute" pkg="robosar_navigation" type="robosar_mission_execute" output="screen"/> 
 
 	<!-- <node name="rviz" pkg="rviz" type="rviz" args="-d $(find robosar_navigation)/config/rviz/robot.rviz" /> -->
 	
