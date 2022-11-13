@@ -138,6 +138,7 @@ unsigned char Costmap2D::interpretValue(unsigned char value)
   return scale * LETHAL_OBSTACLE;
 }
 
+// function no longer used since costmap publisher turned to continous publishing
 void Costmap2D::onNewSubscription(const ros::SingleSubscriberPublisher &pub)
 {
   prepareGrid();
