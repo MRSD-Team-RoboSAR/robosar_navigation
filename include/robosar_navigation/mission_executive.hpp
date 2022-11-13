@@ -65,11 +65,13 @@ private:
                     agents = agentsCB;
                     currPos = currPosCB;
                     targetPos = targetPosCB;
+                    goalType = goalTypeCB;
 
                     // clear callback data
                     agentsCB.clear();
                     currPosCB.clear();
                     targetPosCB.clear();
+                    goalTypeCB.clear();
                 }
 
                 ROS_INFO("[MISSION_EXEC] Processing Tasks %ld",agents.size());
@@ -101,7 +103,8 @@ private:
                         // Add agent path to the service request
                         srv.request.paths.push_back(path_agent);
                         srv.request.agent_names.push_back(agents[i]);
-                        
+                        if (!goalType.empty())
+                            srv.request.goal_type.push_back(goalType[i]);
                     }
                 }
                 // Call the controller service
@@ -118,6 +121,7 @@ private:
                 agents.clear();
                 currPos.clear();
                 targetPos.clear();
+                goalType.clear();
 
             }
             
@@ -176,6 +180,8 @@ private:
             agentsCB.push_back(ta_msg.id[i]);
             currPosCB.push_back(startHeap);
             targetPosCB.push_back(goalHeap);
+            if(!ta_msg.goal_type.empty())
+                goalTypeCB.push_back(ta_msg.goal_type[i]);
             
             // Save them on the heap so that you can free them later
             goal_vec.push_back(goalHeap);
@@ -189,10 +195,12 @@ private:
     std::vector<std::string> agentsCB;
     std::vector<double*> currPosCB;
     std::vector<double*> targetPosCB;
+    std::vector<int> goalTypeCB;
 
     std::vector<std::string> agents;
     std::vector<double*> currPos;
     std::vector<double*> targetPos;
+    std::vector<int> goalType;
     Graph gridmap;
     ros::Subscriber status_subscriber_,task_allocation_subscriber, gui_subscriber_;
     ros::NodeHandle nh_;
