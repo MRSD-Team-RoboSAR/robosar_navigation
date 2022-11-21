@@ -66,12 +66,15 @@ private:
                     currPos = currPosCB;
                     targetPos = targetPosCB;
                     goalType = goalTypeCB;
+                    goalId = goalIdCB;
 
                     // clear callback data
                     agentsCB.clear();
                     currPosCB.clear();
                     targetPosCB.clear();
                     goalTypeCB.clear();
+                    goalIdCB.clear();
+
                 }
 
                 ROS_INFO("[MISSION_EXEC] Processing Tasks %ld",agents.size());
@@ -105,6 +108,8 @@ private:
                         srv.request.agent_names.push_back(agents[i]);
                         if (!goalType.empty())
                             srv.request.goal_type.push_back(goalType[i]);
+                        if(!goalId.empty())
+                            srv.request.goal_id.push_back(goalId[i]);
                     }
                 }
                 // Call the controller service
@@ -182,6 +187,8 @@ private:
             targetPosCB.push_back(goalHeap);
             if(!ta_msg.goal_type.empty())
                 goalTypeCB.push_back(ta_msg.goal_type[i]);
+            if(!ta_msg.goal_id.empty())
+                goalIdCB.push_back(ta_msg.goal_id[i]);
             
             // Save them on the heap so that you can free them later
             goal_vec.push_back(goalHeap);
@@ -192,6 +199,7 @@ private:
     std::set<std::string> fleet_info;
     ros::ServiceClient status_client; 
 
+    std::vector<int> goalIdCB;
     std::vector<std::string> agentsCB;
     std::vector<double*> currPosCB;
     std::vector<double*> targetPosCB;
@@ -201,6 +209,7 @@ private:
     std::vector<double*> currPos;
     std::vector<double*> targetPos;
     std::vector<int> goalType;
+    std::vector<int> goalId;
     Graph gridmap;
     ros::Subscriber status_subscriber_,task_allocation_subscriber, gui_subscriber_;
     ros::NodeHandle nh_;
