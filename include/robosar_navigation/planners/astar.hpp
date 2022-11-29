@@ -154,7 +154,7 @@ public:
             std::vector<double> point = pg->toNodeInfo(goalNode);
             trajectory.insert(trajectory.begin(),point);
             traj_map[point[2]] = std::make_pair(point[0],point[1]);
-            ROS_WARN("%ld : %f %f %f",trajectory.size(),point[0],point[1],point[2]);
+            ROS_INFO("%ld : %f %f %f",trajectory.size(),point[0],point[1],point[2]);
             Graph::Node parentNode = goalNode;
             do
             {
@@ -162,7 +162,7 @@ public:
                 point = pg->toNodeInfo(parentNode);
                 trajectory.insert(trajectory.begin(),point);
                 traj_map[point[2]] = std::make_pair(point[0],point[1]);
-                // ROS_INFO("%ld : %f %f %f",trajectory.size(),point[0],point[1],point[2]);
+                ROS_INFO("%ld : %f %f %f",trajectory.size(),point[0],point[1],point[2]);
             } while (parentNode.t>0.001);
 
             publishPlan();
