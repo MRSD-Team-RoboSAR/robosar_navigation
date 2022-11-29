@@ -90,12 +90,12 @@ public:
         // do main cycle
         for (; cycle < cycles && !queue.empty(); cycle++) // go for this many cycles or if queue is over
         {
-            ROS_INFO("On cycle %d / %d with queue size %ld \n",cycle,cycles,queue.size());
+            // ROS_INFO("On cycle %d / %d with queue size %ld \n",cycle,cycles,queue.size());
             std::pair<float,Graph::Node> qn = queue.top();
             queue.pop();
             // Mark as explored
-            if(pending.find(qn.second)!=pending.end())
-                ROS_WARN("Already explored!!");
+            // if(pending.find(qn.second)!=pending.end())
+            //     ROS_WARN("Already explored!!");
             pending.insert(qn.second);
 
             // Check if reached goal
@@ -106,7 +106,7 @@ public:
             }
 
             std::vector<Graph::Node> neighbours = pg->getNeighbours(qn.second,planner_name);
-            ROS_DEBUG("%d %d",qn.second.x,qn.second.y);
+            // ROS_DEBUG("%d %d",qn.second.x,qn.second.y);
             // Graph has already done collision checking and stuff
             for(auto neighbour:neighbours) {
                 
@@ -119,10 +119,10 @@ public:
                     else
                         new_pot =  potarr[qn.second]  + (float)(pg->lookUpCost(neighbour))/5.0f;
     
-                    ROS_DEBUG("Plan : %f %f %f %d", qn.first,
-                                                    potarr[qn.second],
-                                                    heuristic_weight*((float)(pg->getDistanceBwNodes(neighbour,goalNode))),
-                                                    pg->getDistanceBwNodes(neighbour,goalNode));
+                    // ROS_DEBUG("Plan : %f %f %f %d", qn.first,
+                    //                                 potarr[qn.second],
+                    //                                 heuristic_weight*((float)(pg->getDistanceBwNodes(neighbour,goalNode))),
+                    //                                 pg->getDistanceBwNodes(neighbour,goalNode));
 
                     // Check if potential improved
                     if(potarr.find(neighbour)==potarr.end() || new_pot<potarr[neighbour])
@@ -135,8 +135,8 @@ public:
                         //publishExpansion(NODE_FRONTIER,neighbour);
                         cameFrom[neighbour] = qn.second;
                     }
-                    else
-                        ROS_WARN("Potential did not improve!!");
+                    // else
+                    //     ROS_WARN("Potential did not improve!!");
 
                     //ROS_INFO("%d %d %f %f\n",neighbour.x,neighbour.y,new_pot,potarr[neighbour]);
 

@@ -113,9 +113,9 @@ void Costmap2D::incomingMap(const nav_msgs::OccupancyGridConstPtr &new_map)
   has_updated_data_ = true;
 
   // publish inflated costmap
-  ROS_INFO("Preparing grid.");
+  // ROS_INFO("Preparing grid.");
   prepareGrid();
-  ROS_INFO("Publishing inflated costmap.");
+  // ROS_INFO("Publishing inflated costmap.");
   costmap_pub_.publish(grid_);
 }
 
