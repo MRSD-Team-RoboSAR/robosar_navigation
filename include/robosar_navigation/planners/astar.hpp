@@ -71,6 +71,9 @@ public:
 
         // default parent for goal is start
         cameFrom[goalNode] = startNode;
+        
+        closestToGoalNode = startNode;
+        closestToGoalNodeDist =  pg->getDistanceBwNodes(startNode, goalNode);
 
     }
 
@@ -99,10 +102,14 @@ public:
             pending.insert(qn.second);
 
             // Check if reached goal
-            if(pg->getDistanceBwNodes(qn.second,goalNode)==0) {
+            int dist_to_goal = pg->getDistanceBwNodes(qn.second,goalNode);
+            if(dist_to_goal==0) {
                 goalNode = qn.second;
                 path_found = true;
                 break;
+            } else if(dist_to_goal < closestToGoalNodeDist) {
+                closestToGoalNode = qn.second;
+                closestToGoalNodeDist = dist_to_goal;
             }
 
             std::vector<Graph::Node> neighbours = pg->getNeighbours(qn.second,planner_name);
@@ -143,6 +150,12 @@ public:
                 }
             }
 
+        }
+        
+        if(!path_found) {
+            ROS_WARN("[AStar] Path not found! Closest node to goal is %d,%d",closestToGoalNode.x,closestToGoalNode.y);
+            goalNode = closestToGoalNode;
+            path_found = true;
         }
 
         if(path_found)
@@ -318,6 +331,8 @@ private:
     std::unordered_map<Graph::Node,Graph::Node,Graph::Node::hashFunction> cameFrom;
     std::unordered_set<Graph::Node,Graph::Node::hashFunction> pending;
     Graph* pg;
+    Graph::Node closestToGoalNode;
+    int closestToGoalNodeDist;
     Graph::Node goalNode;
     Graph::Node startNode;
     double* goal;
