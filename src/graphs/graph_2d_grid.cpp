@@ -6,7 +6,7 @@
 #include <unordered_set>
 
 
-Graph2DGrid::Graph2DGrid(): allow_unknown(false) {
+Graph2DGrid::Graph2DGrid(): allow_unknown(true) {
 
 
     // @ TODO Indraneel This is called only once 
@@ -58,7 +58,7 @@ bool Graph2DGrid::collisionCheck(Node n, std::string whoami) {
     if(has_updated_data_)
         scaleCostMap();
 
-    if(costmap_[toNodeID(n)]>=COST_OBS_ROS)
+    if(costmap_[toNodeID(n)]>=COST_OBS)
         return true;
 
     std::vector<double> nodeMapFrame = toNodeInfo(n);
